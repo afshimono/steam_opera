@@ -1,0 +1,6 @@
+jupyter==1.0.0
+tinydb==4.8.0
+tinydb-serialization==2.1.1
+pandas==2.1.4
+seaborn==0.13.0
+python-dotenv==1.0.0

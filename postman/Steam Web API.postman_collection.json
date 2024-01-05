@@ -1,0 +1,404 @@
+{
+	"info": {
+		"_postman_id": "f9f8e9a1-00bb-47b4-a6a5-fea7fbcaba85",
+		"name": "Steam Web API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26378114"
+	},
+	"item": [
+		{
+			"name": "PlayerSummaries",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={{STEAM_KEY}}&steamids=76561197988479390,76561197963863532",
+					"protocol": "http",
+					"host": [
+						"api",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"ISteamUser",
+						"GetPlayerSummaries",
+						"v0002",
+						""
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "{{STEAM_KEY}}"
+						},
+						{
+							"key": "steamids",
+							"value": "76561197988479390,76561197963863532"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "FriendList",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={{STEAM_KEY}}&steamid={{STEAM_PROFILE_ID}}&relationship=friend",
+					"protocol": "http",
+					"host": [
+						"api",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"ISteamUser",
+						"GetFriendList",
+						"v0001",
+						""
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "{{STEAM_KEY}}"
+						},
+						{
+							"key": "steamid",
+							"value": "{{STEAM_PROFILE_ID}}"
+						},
+						{
+							"key": "relationship",
+							"value": "friend"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GameAchievementPercentage",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v0002/?gameid=440",
+					"protocol": "http",
+					"host": [
+						"api",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"ISteamUserStats",
+						"GetGlobalAchievementPercentagesForApp",
+						"v0002",
+						""
+					],
+					"query": [
+						{
+							"key": "gameid",
+							"value": "440"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetPlayerAchievement",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=440&key={{STEAM_KEY}}&steamid={{STEAM_PROFILE_ID}}",
+					"protocol": "http",
+					"host": [
+						"api",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"ISteamUserStats",
+						"GetPlayerAchievements",
+						"v0001",
+						""
+					],
+					"query": [
+						{
+							"key": "appid",
+							"value": "440"
+						},
+						{
+							"key": "key",
+							"value": "{{STEAM_KEY}}"
+						},
+						{
+							"key": "steamid",
+							"value": "{{STEAM_PROFILE_ID}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetGameSchema",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key={{STEAM_KEY}}&appid=440",
+					"protocol": "https",
+					"host": [
+						"api",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"ISteamUserStats",
+						"GetSchemaForGame",
+						"v2",
+						""
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "{{STEAM_KEY}}"
+						},
+						{
+							"key": "appid",
+							"value": "440"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetBadges",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.steampowered.com/IPlayerService/GetBadges/v1/?key={{STEAM_KEY}}&steamid={{STEAM_PROFILE_ID}}",
+					"protocol": "https",
+					"host": [
+						"api",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"IPlayerService",
+						"GetBadges",
+						"v1",
+						""
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "{{STEAM_KEY}}"
+						},
+						{
+							"key": "steamid",
+							"value": "{{STEAM_PROFILE_ID}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetOwnedGames",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={{STEAM_KEY}}&steamid={{STEAM_PROFILE_ID}}&format=json",
+					"protocol": "http",
+					"host": [
+						"api",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"IPlayerService",
+						"GetOwnedGames",
+						"v0001",
+						""
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "{{STEAM_KEY}}"
+						},
+						{
+							"key": "steamid",
+							"value": "{{STEAM_PROFILE_ID}}"
+						},
+						{
+							"key": "format",
+							"value": "json"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetRecentlyPlayed",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key={{STEAM_KEY}}&steamid={{STEAM_PROFILE_ID}}&format=json",
+					"protocol": "http",
+					"host": [
+						"api",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"IPlayerService",
+						"GetRecentlyPlayedGames",
+						"v0001",
+						""
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "{{STEAM_KEY}}"
+						},
+						{
+							"key": "steamid",
+							"value": "{{STEAM_PROFILE_ID}}"
+						},
+						{
+							"key": "format",
+							"value": "json"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetUserStatsForGame",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v0002/?steamid={{STEAM_PROFILE_ID}}&key={{STEAM_KEY}}&appid=290930",
+					"protocol": "http",
+					"host": [
+						"api",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"ISteamUserStats",
+						"GetUserStatsForGame",
+						"v0002",
+						""
+					],
+					"query": [
+						{
+							"key": "steamid",
+							"value": "{{STEAM_PROFILE_ID}}"
+						},
+						{
+							"key": "key",
+							"value": "{{STEAM_KEY}}"
+						},
+						{
+							"key": "appid",
+							"value": "290930"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetAppDetails",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+<<<<<<< HEAD
+					"raw": "http://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v0002/?steamid=76561197988479390&key=BF68604961D6978210AA06B97FCADF77&appid=290930",
+					"protocol": "http",
+					"host": [
+						"api",
+=======
+					"raw": "http://store.steampowered.com/api/appdetails?appids=10",
+					"protocol": "http",
+					"host": [
+						"store",
+>>>>>>> e3d89b0 (Ready to go public)
+						"steampowered",
+						"com"
+					],
+					"path": [
+<<<<<<< HEAD
+						"ISteamUserStats",
+						"GetUserStatsForGame",
+						"v0002",
+						""
+					],
+					"query": [
+						{
+							"key": "steamid",
+							"value": "76561197988479390"
+						},
+						{
+							"key": "key",
+							"value": "BF68604961D6978210AA06B97FCADF77"
+						},
+						{
+							"key": "appid",
+							"value": "290930"
+=======
+						"api",
+						"appdetails"
+					],
+					"query": [
+						{
+							"key": "appids",
+							"value": "10"
+>>>>>>> e3d89b0 (Ready to go public)
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetAppDetailsFromStore",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://store.steampowered.com/api/appdetails?appids=440",
+					"protocol": "http",
+					"host": [
+						"store",
+						"steampowered",
+						"com"
+					],
+					"path": [
+						"api",
+						"appdetails"
+					],
+					"query": [
+						{
+							"key": "appids",
+							"value": "440"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
