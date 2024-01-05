@@ -31,6 +31,15 @@ first day of the month on a regular basis.
 
 The description of what each graph represents can be found in the Notebook itself, as a text/content block instead of code.
 
+There are some ENV variables that can be configured for the notebooks, which are available in the `sample.env` file. Those are:
+```
+STEAM_KEY => The Steam Key
+PLAYER_ID => Your Steam Player ID
+RUN_FRIENDS_STATS => This will run the Notebook part that generates some graphs comparing your data with you friends. Since fetching data for all your friend list might be an expensive operation, you can switch it off if you are just running a simple test here.
+CLEAN_USER_DB => This is used to remove all the data from the users from your TinyDB, in case you want to push to your repo without player_ids.
+CLEAN_GAMEPLAY_DB =>  The same thing for gameplay info.
+```
+
 ### Library
 Work In Progress
 
