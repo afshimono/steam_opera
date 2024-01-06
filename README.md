@@ -46,6 +46,15 @@ Work In Progress
 ### TO-DO
 - [x] Experimental Notebook to generate reports with all-time gameplay
 - [x] Save results to TinyDB to avoid Steam API consumption
+- [ ] Top 10 Game by Playtime
+- [ ] Playtime by Genre
+- [ ] Game count by Genre
+- [ ] Check how many friends are available for the report
+- [ ] Show names of the games by developer
+- [ ] Show names of friends in the top played games
+- [ ] Show how many games were not available
+- [ ] Include Steam Reviews data as another source of game quality besides metacritic
+- [ ] Check if the number of friends and friends DF contains duplicates
 - [ ] Generate PDF as Report
 - [ ] README Notebook Section
 - [ ] Makefile
