@@ -43,9 +43,18 @@ CLEAN_GAMEPLAY_DB =>  The same thing for gameplay info.
 ### Library
 Work In Progress
 
-### TO-DO
+### TO-DO by Devs
 - [x] Experimental Notebook to generate reports with all-time gameplay
 - [x] Save results to TinyDB to avoid Steam API consumption
+- [ ] Generate PDF as Report
+- [ ] README Notebook Section
+- [ ] Makefile
+- [ ] Steam Data Lib
+- [ ] Tests
+- [ ] Pipelines
+- [ ] README Lib Section
+
+### TO-DO by Users
 - [ ] Top 10 Game by Playtime
 - [ ] Playtime by Genre
 - [ ] Game count by Genre
@@ -55,10 +64,3 @@ Work In Progress
 - [ ] Show how many games were not available
 - [ ] Include Steam Reviews data as another source of game quality besides metacritic
 - [ ] Check if the number of friends and friends DF contains duplicates
-- [ ] Generate PDF as Report
-- [ ] README Notebook Section
-- [ ] Makefile
-- [ ] Steam Data Lib
-- [ ] Tests
-- [ ] Pipelines
-- [ ] README Lib Section
