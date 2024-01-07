@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "f9f8e9a1-00bb-47b4-a6a5-fea7fbcaba85",
+		"_postman_id": "20916557-1cd0-4de3-80e1-81a73cf9f979",
 		"name": "Steam Web API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "26378114"
+		"_exporter_id": "13732401"
 	},
 	"item": [
 		{
@@ -325,40 +325,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-<<<<<<< HEAD
-					"raw": "http://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v0002/?steamid=76561197988479390&key=BF68604961D6978210AA06B97FCADF77&appid=290930",
-					"protocol": "http",
-					"host": [
-						"api",
-=======
 					"raw": "http://store.steampowered.com/api/appdetails?appids=10",
 					"protocol": "http",
 					"host": [
 						"store",
->>>>>>> e3d89b0 (Ready to go public)
 						"steampowered",
 						"com"
 					],
 					"path": [
-<<<<<<< HEAD
-						"ISteamUserStats",
-						"GetUserStatsForGame",
-						"v0002",
-						""
-					],
-					"query": [
-						{
-							"key": "steamid",
-							"value": "76561197988479390"
-						},
-						{
-							"key": "key",
-							"value": "BF68604961D6978210AA06B97FCADF77"
-						},
-						{
-							"key": "appid",
-							"value": "290930"
-=======
 						"api",
 						"appdetails"
 					],
@@ -366,34 +340,6 @@
 						{
 							"key": "appids",
 							"value": "10"
->>>>>>> e3d89b0 (Ready to go public)
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "GetAppDetailsFromStore",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://store.steampowered.com/api/appdetails?appids=440",
-					"protocol": "http",
-					"host": [
-						"store",
-						"steampowered",
-						"com"
-					],
-					"path": [
-						"api",
-						"appdetails"
-					],
-					"query": [
-						{
-							"key": "appids",
-							"value": "440"
 						}
 					]
 				}
