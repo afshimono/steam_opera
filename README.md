@@ -46,8 +46,7 @@ Work In Progress
 ### TO-DO by Devs
 - [x] Experimental Notebook to generate reports with all-time gameplay
 - [x] Save results to TinyDB to avoid Steam API consumption
-- [ ] Generate PDF as Report
-- [ ] README Notebook Section
+- [x] README Notebook Section
 - [ ] Makefile
 - [ ] Steam Data Lib
 - [ ] Tests
@@ -55,9 +54,9 @@ Work In Progress
 - [ ] README Lib Section
 
 ### TO-DO by Users
-- [ ] Top 10 Game by Playtime
-- [ ] Playtime by Genre
-- [ ] Game count by Genre
+- [x] Top 10 Game by Playtime
+- [x] Playtime by Genre
+- [x] Game count by Genre
 - [ ] Check how many friends are available for the report
 - [ ] Show names of the games by developer
 - [ ] Show names of friends in the top played games
