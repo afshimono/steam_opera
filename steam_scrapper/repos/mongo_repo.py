@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 
+from repo import Repo
 
-class SteamMongo:
+class SteamMongo(Repo):
     pass

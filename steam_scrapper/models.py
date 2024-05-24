@@ -16,3 +16,14 @@ class SteamProfile:
     real_name: Optional[str] = None
     loc_country: Optional[str] = None
     loc_state: Optional[str] = None
+
+@dataclass
+class SteamFriendItem:
+    steamid: str
+    friend_since: dt.datetime
+
+@dataclass
+class GameplayItem:
+    appid: str
+    last_time_played: dt.datetime
+    playtime: int
