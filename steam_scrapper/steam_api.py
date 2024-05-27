@@ -2,11 +2,13 @@ from typing import List
 import datetime as dt
 
 import requests
+import backoff
 
 from config import config
-from models import SteamProfile, SteamFriendItem, GameplayItem
+from models import SteamProfile, SteamFriendItem, GameplayItem, SteamGameinfo
 
-
+@backoff.on_exception(backoff.expo,(requests.exceptions.Timeout,
+                       requests.exceptions.ConnectionError),max_tries=5)
 def fetch_player_info(player_ids:str, steam_key:str=None) -> List[SteamProfile]:
     """
     Fetches the player details for the informed player ids.
@@ -40,6 +42,8 @@ def fetch_player_info(player_ids:str, steam_key:str=None) -> List[SteamProfile]:
         )
     return result
 
+@backoff.on_exception(backoff.expo,(requests.exceptions.Timeout,
+                       requests.exceptions.ConnectionError),max_tries=5)
 def fetch_player_friend_list(player_id:str, steam_key:str=None)->List[SteamFriendItem]:
     """
     Fetches the friend list for a given player id.
@@ -62,6 +66,8 @@ def fetch_player_friend_list(player_id:str, steam_key:str=None)->List[SteamFrien
         ))
     return result
 
+@backoff.on_exception(backoff.expo,(requests.exceptions.Timeout,
+                       requests.exceptions.ConnectionError),max_tries=5)
 def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[GameplayItem]:
     """
     Fetches the gameplay list for a given player id.
@@ -83,4 +89,54 @@ def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[Gameplay
             last_time_played=dt.datetime.fromtimestamp(gameplay.get("rtime_last_played")),
             playtime=gameplay.get("playtime_forever"))
         )
+    return result
+
+@backoff.on_exception(backoff.expo,(requests.exceptions.Timeout,
+                       requests.exceptions.ConnectionError),max_tries=5)
+def fetch_game_details(app_id:str, steam_key:str=None)->SteamGameinfo:
+    """
+    Fetches the game details for a given app id.
+    :param steam_key: the key to access the Steam API
+    :type steam_key: str
+    :param app_id: app id in steam
+    "type player_ids: str
+    """
+    steam_key = steam_key or config.steam_key
+    gameinfo_url = (
+        f"http://store.steampowered.com/api/appdetails?appids={app_id}"
+    )
+    r = requests.get(gameinfo_url)
+    gameinfo_details = r.json()[str(app_id)]["data"]
+    release_date_str = gameinfo_details["release_date"].get("date") if not gameinfo_details["release_date"]["coming_soon"] else None
+    if release_date_str:
+        try:
+            release_date = dt.datetime.strptime(release_date_str,"%d %b, %Y")
+        except ValueError:
+            try:
+                release_date = dt.datetime.strptime(release_date_str,"%b %d, %Y")
+            except ValueError:
+                try:
+                    release_date = dt.datetime.strptime(release_date_str,"%d %b %Y")
+                except ValueError:
+                    release_date = None
+    genre_item = gameinfo_details.get("genres")
+    genre_list = [item["description"] for item in genre_item] if genre_item else []
+    categories_item = gameinfo_details.get("categories")
+    categories_list = [item["description"] for item in categories_item] if categories_item else []
+    metacritic_item = gameinfo_details.get("metacritic")
+    result = SteamGameinfo(
+        appid=gameinfo_details.get("steam_appid"),
+        name=gameinfo_details.get("name"),
+        min_age=int(gameinfo_details.get("required_age")),
+        description=gameinfo_details.get("detailed_description"),
+        about=gameinfo_details.get("about_the_game"),
+        release_date=release_date,
+        is_free=gameinfo_details.get("is_free"),
+        type=gameinfo_details.get("type"),
+        developers=gameinfo_details.get("developers"),
+        publishers=gameinfo_details.get("publishers"),
+        metacritic_score=metacritic_item.get("score") if metacritic_item else None,
+        genres=genre_list,
+        categories=categories_list
+    )
     return result
