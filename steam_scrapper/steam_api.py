@@ -24,6 +24,7 @@ def fetch_player_info(player_ids:str, steam_key:str=None) -> List[SteamProfile]:
     r = requests.get(player_url)
     player_list = r.json()["response"]["players"]
     result = []
+    current_time = dt.datetime.now()
     for player in player_list:
         result.append(
             SteamProfile(
@@ -38,6 +39,8 @@ def fetch_player_info(player_ids:str, steam_key:str=None) -> List[SteamProfile]:
                 real_name=player.get("realname"),
                 loc_country=player.get("loccountrycode"),
                 loc_state=player.get("locstatecode"),
+                created_at=current_time,
+                updated_at=current_time
             )
         )
     return result
