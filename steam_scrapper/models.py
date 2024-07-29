@@ -15,9 +15,12 @@ class SteamProfile:
     time_created: dt.datetime
     created_at: dt.datetime
     updated_at: dt.datetime
+    last_failed_update_attempt: Optional[dt.datetime] = None
     real_name: Optional[str] = None
     loc_country: Optional[str] = None
     loc_state: Optional[str] = None
+    missing_in_action: Optional[bool] = False
+    killed_in_action: Optional[bool] = False
 
 @dataclass
 class SteamFriendItem:
@@ -31,13 +34,13 @@ class SteamFriendList:
     created_at: dt.datetime
     updated_at: dt.datetime
     created_year: int
-    create_month: int
+    created_month: int
 
 @dataclass
 class GameplayItem:
     appid: str
-    last_time_played: dt.datetime
     playtime: int
+    last_time_played: Optional[dt.datetime]=None
 
 @dataclass
 class GameplayList:
@@ -46,7 +49,7 @@ class GameplayList:
     created_at: dt.datetime
     updated_at: dt.datetime
     created_year: int
-    create_month: int
+    created_month: int
     
 @dataclass
 class SteamGameinfo:
@@ -65,3 +68,4 @@ class SteamGameinfo:
     updated_at: dt.datetime
     release_date: Optional[dt.datetime]=None
     metacritic_score: Optional[int]=None
+    last_failed_update_attempt: Optional[dt.datetime] = None
