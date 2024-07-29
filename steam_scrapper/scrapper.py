@@ -101,6 +101,7 @@ class SteamScrapper:
                     created_year=self.current_time.year
                 )
                 self.repo.save_friend_list(steam_friend_list_obj)
+                return steam_friend_list_obj
             return None
         return self.repo.get_friend_list_by_id(player_id=steam_id)[0]
 

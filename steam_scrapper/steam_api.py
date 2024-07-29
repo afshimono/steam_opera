@@ -106,12 +106,14 @@ def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[Gameplay
         raise SteamResourceNotAvailable("Status code not acceptable.")
     if r.status_code >= 400:
         return []
-    gameplay_list = r.json()["response"]["games"]
+    gameplay_list = r.json()["response"].get("games")
+    if gameplay_list is None:
+        return []
     result = []
     for gameplay in gameplay_list:
         last_time_played = gameplay.get("rtime_last_played",0)
         result.append(GameplayItem(
-            appid=gameplay.get("appid"),
+            appid=str(gameplay.get("appid")),
             last_time_played=dt.datetime.fromtimestamp(last_time_played) if last_time_played != 0 else None,
             playtime=gameplay.get("playtime_forever"))
         )
@@ -165,7 +167,7 @@ def fetch_game_details(
     categories_list = [item["description"] for item in categories_item] if categories_item else []
     metacritic_item = gameinfo_details.get("metacritic")
     result = SteamGameinfo(
-        appid=gameinfo_details.get("steam_appid"),
+        appid=str(gameinfo_details.get("steam_appid")),
         name=gameinfo_details.get("name"),
         min_age=int(gameinfo_details.get("required_age")),
         description=gameinfo_details.get("detailed_description"),
