@@ -49,9 +49,10 @@ def steam_scrap(steam_key, mongo_db_url,player_id, sleep_time_in_ms, output,freq
         steam_scrapper.scrap_friend_list(steam_id=friend_item.steamid)
 
     if fetch_friends:
-        for friend_item in tqdm(friend_list.friend_list, desc="Scrapping Friends Gameplay", leave=False):
+        for friend_item in tqdm(friend_list.friend_list, desc="Scrapping Friends Gameplay"):
             gameplay_info = steam_scrapper.scrap_gameplay_info(steam_id=friend_item.steamid)
-            game_id_list_str = ",".join([gameplay_item.appid for gameplay_item in gameplay_info.gameplay_list])
-            steam_scrapper.scrap_game_info(game_id_list_str)
+            if gameplay_info is not None:
+                game_id_list_str = ",".join([gameplay_item.appid for gameplay_item in gameplay_info.gameplay_list])
+                steam_scrapper.scrap_game_info(game_id_list_str)
 if __name__ == "__main__":
     steam_scrap()

@@ -8,10 +8,12 @@ from config import config
 from models import SteamProfile, SteamFriendItem, GameplayItem, SteamGameinfo
 from errors import SteamResourceNotAvailable
 
+MAX_RETRIES = 10
+
 @backoff.on_exception(backoff.expo,(
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
-        SteamResourceNotAvailable),max_tries=8)
+        SteamResourceNotAvailable),max_tries=MAX_RETRIES)
 def fetch_player_info(
     player_ids:str, 
     steam_key:str=None,
@@ -58,7 +60,7 @@ def fetch_player_info(
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
         SteamResourceNotAvailable
-        ),max_tries=8)
+        ),max_tries=MAX_RETRIES)
 def fetch_player_friend_list(player_id:str, steam_key:str=None)->List[SteamFriendItem]:
     """
     Fetches the friend list for a given player id.
@@ -88,7 +90,7 @@ def fetch_player_friend_list(player_id:str, steam_key:str=None)->List[SteamFrien
 @backoff.on_exception(backoff.expo,(
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
-        SteamResourceNotAvailable),max_tries=8)
+        SteamResourceNotAvailable),max_tries=MAX_RETRIES)
 def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[GameplayItem]:
     """
     Fetches the gameplay list for a given player id.
@@ -122,7 +124,7 @@ def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[Gameplay
 @backoff.on_exception(backoff.expo,(
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
-        SteamResourceNotAvailable),max_tries=8)
+        SteamResourceNotAvailable),max_tries=MAX_RETRIES)
 def fetch_game_details(
     app_id:str, 
     steam_key:str=None,

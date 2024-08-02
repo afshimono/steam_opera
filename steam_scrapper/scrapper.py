@@ -71,9 +71,10 @@ class SteamScrapper:
             if player_profile.updated_at.year == self.current_time.year and \
                 player_profile.updated_at.month == self.current_time.month:
                 return True
-            elif player_profile.last_failed_update_attempt.year == self.current_time.year and \
-                player_profile.last_failed_update_attempt.month == self.current_time.month:
-                return True
+            elif player_profile.last_failed_update_attempt is not None:
+                if player_profile.last_failed_update_attempt.year == self.current_time.year and \
+                    player_profile.last_failed_update_attempt.month == self.current_time.month:
+                    return True
         elif self.frequency == "year":
             if player_profile.updated_at.year == self.current_time.year:
                 return True
