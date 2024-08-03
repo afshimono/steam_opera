@@ -204,9 +204,16 @@ class SteamScrapper:
             if gameinfo.updated_at.year == self.current_time.year and \
                 gameinfo.updated_at.month == self.current_time.month:
                 return True
+            elif gameinfo.last_failed_update_attempt is not None:
+                if gameinfo.last_failed_update_attempt.year == self.current_time.year and \
+                    gameinfo.last_failed_update_attempt.month == self.current_time.month:
+                    return True
         elif self.frequency == "year":
             if gameinfo.updated_at.year == self.current_time.year:
                 return True
+            elif gameinfo.last_failed_update_attempt is not None:
+                if gameinfo.last_failed_update_attempt.year == self.current_time.year:
+                    return True
         return False
 
     def scrap_gameplay_info(self, steam_id:str)->Union[GameplayList,None]:
