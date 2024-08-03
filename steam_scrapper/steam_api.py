@@ -11,6 +11,7 @@ from errors import SteamResourceNotAvailable
 MAX_RETRIES = 10
 
 @backoff.on_exception(backoff.expo,(
+        requests.exceptions.ConnectTimeout,
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
         SteamResourceNotAvailable),max_tries=MAX_RETRIES)
@@ -57,6 +58,7 @@ def fetch_player_info(
     return result
 
 @backoff.on_exception(backoff.expo,(
+        requests.exceptions.ConnectTimeout,
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
         SteamResourceNotAvailable
@@ -88,6 +90,7 @@ def fetch_player_friend_list(player_id:str, steam_key:str=None)->List[SteamFrien
     return result
 
 @backoff.on_exception(backoff.expo,(
+        requests.exceptions.ConnectTimeout,
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
         SteamResourceNotAvailable),max_tries=MAX_RETRIES)
@@ -122,6 +125,7 @@ def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[Gameplay
     return result
 
 @backoff.on_exception(backoff.expo,(
+        requests.exceptions.ConnectTimeout,
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
         SteamResourceNotAvailable),max_tries=MAX_RETRIES)

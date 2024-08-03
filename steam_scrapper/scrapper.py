@@ -11,11 +11,10 @@ from models import SteamProfile, SteamFriendList, SteamGameinfo, GameplayList
 import steam_api
 
 class SteamScrapper:
-    def __init__(self, repo:Repo, frequency:str, sleep_time_in_ms:Optional[int]=500):
+    def __init__(self, repo:Repo, frequency:str):
         self.repo = repo
         self.steam_api = steam_api
         self.frequency = frequency
-        self.sleep_time_in_ms = sleep_time_in_ms
         self.current_time = dt.datetime.now()
 
 
@@ -30,7 +29,6 @@ class SteamScrapper:
         """
         steam_id_list = steam_ids.split(",")
         steam_user_profiles = steam_api.fetch_player_info(steam_ids)
-        time.sleep(float(self.sleep_time_in_ms)/1000.0) 
         steam_user_profile_ids = [steam_profile.steamid for steam_profile in steam_user_profiles]
         steam_user_profile_dict = { user.steamid:user for user in steam_user_profiles}
         db_user_profiles = self.repo.get_player_info_by_id_list(steam_id_list)
@@ -82,6 +80,27 @@ class SteamScrapper:
                 return True
         return False
 
+    def scrap_friend_list_batch(self, steam_id_list:List[str])->None:
+        """
+        Creates a new entry for friend list.
+        :param steam_id_list: the list of steam id to retrieve the friend list
+        :type steam_id: List[str]
+        """
+        if not self.is_friend_list_updated(steam_id):
+            steam_friend_list = steam_api.fetch_player_friend_list(player_id=steam_id)
+            if len(steam_friend_list)>0:
+                steam_friend_list_obj = SteamFriendList(
+                    steamid=steam_id,
+                    friend_list=steam_friend_list,
+                    created_at=self.current_time,
+                    updated_at=self.current_time,
+                    created_month=self.current_time.month,
+                    created_year=self.current_time.year
+                )
+                self.repo.save_friend_list(steam_friend_list_obj)
+                return steam_friend_list_obj
+            return None
+        return self.repo.get_friend_list_by_id(player_id=steam_id)[0]
 
     def scrap_friend_list(self, steam_id:str)->Union[SteamFriendList,None]:
         """
@@ -91,7 +110,6 @@ class SteamScrapper:
         """
         if not self.is_friend_list_updated(steam_id):
             steam_friend_list = steam_api.fetch_player_friend_list(player_id=steam_id)
-            time.sleep(float(self.sleep_time_in_ms)/1000.0)
             if len(steam_friend_list)>0:
                 steam_friend_list_obj = SteamFriendList(
                     steamid=steam_id,
@@ -145,11 +163,10 @@ class SteamScrapper:
         db_gameinfo_dict = { gameinfo.appid:gameinfo for gameinfo in db_gameinfo}
         db_gameinfo_ids = [gameinfo.appid for gameinfo in db_gameinfo]
         gameinfo_to_save_in_db = []
-        for idx, app_id in enumerate(tqdm(app_id_list, desc="Game Info", leave=False)):
+        for idx, app_id in enumerate(tqdm(app_id_list, desc="Game Info")):
             if app_id in db_gameinfo_ids:
                 if not self.is_game_info_updated(db_gameinfo_dict[app_id]):
                     steam_gameinfo = steam_api.fetch_game_details(app_id)  
-                    time.sleep(float(self.sleep_time_in_ms)/1000.0) 
                     # profile not found in steam but existing in db
                     if app_id in db_gameinfo_ids and steam_gameinfo is None:
                         current_gameinfo = db_gameinfo_dict[app_id]
@@ -162,7 +179,6 @@ class SteamScrapper:
                         gameinfo_to_save_in_db.append(steam_gameinfo)
             else:
                 steam_gameinfo = steam_api.fetch_game_details(app_id)
-                time.sleep(float(self.sleep_time_in_ms)/1000.0)
                 # app does not exist both in steam and in db
                 if steam_gameinfo is None:
                     continue
@@ -199,7 +215,6 @@ class SteamScrapper:
         """
         if not self.is_gameplay_info_updated(steam_id):
             gameplay_list = steam_api.fetch_player_gameplay_list(player_id=steam_id)
-            time.sleep(float(self.sleep_time_in_ms)/1000.0)
             if len(gameplay_list)>0:
                 steam_gameplay_list_obj = GameplayList(
                     steamid=steam_id,
@@ -232,7 +247,7 @@ class SteamScrapper:
                     existing_gameplay_item.created_month == self.current_time.month:
                     return True
         elif self.frequency == "year":
-            existing_gameplay_list = self.repo.get_friend_list_by_id(
+            existing_gameplay_list = self.repo.get_gameplay_info_by_id(
                 steam_id,
                 created_year=self.current_time.year)
             if len(existing_gameplay_list) > 0:

@@ -15,13 +15,12 @@ class SteamApiConfig:
     mongodb_url: Optional[str]
     sleep_time_in_ms: Optional[int]
 
-    def __init__(self, steam_key:str=None, player_id:str=None, mongodb_url:str=None, sleep_time_in_ms:int=None):
+    def __init__(self, steam_key:str=None, player_id:str=None, mongodb_url:str=None):
         self.steam_api_url = "https://api.steampowered.com"
         self.steam_api_url = "http://store.steampowered.com"
         self.steam_key = steam_key or os.getenv("STEAM_KEY")
         self.player_id = player_id or os.getenv("PLAYER_ID")
         self.mongodb_url = mongodb_url or os.getenv("MONGO_DB_URL")
-        self.sleep_time_in_ms = sleep_time_in_ms or os.getenv("SLEEP_TIME_IN_MS")
 
 
 config = SteamApiConfig()
