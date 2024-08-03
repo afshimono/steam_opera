@@ -28,14 +28,18 @@ class SteamScrapper:
         :type steam_ids: str
         """
         steam_id_list = steam_ids.split(",")
-        steam_user_profiles = steam_api.fetch_player_info(steam_ids)
-        steam_user_profile_ids = [steam_profile.steamid for steam_profile in steam_user_profiles]
-        steam_user_profile_dict = { user.steamid:user for user in steam_user_profiles}
         db_user_profiles = self.repo.get_player_info_by_id_list(steam_id_list)
         db_user_profile_dict = { user.steamid:user for user in db_user_profiles}
         db_profile_ids = [steam_profile.steamid for steam_profile in db_user_profiles]
+        steam_ids_not_in_db_list = [id for id in steam_id_list 
+                                    if (id not in db_profile_ids) or
+                                    not self.is_user_updated(db_user_profile_dict[id])]
+        steam_user_profiles = steam_api.fetch_player_info(",".join(steam_ids_not_in_db_list)) if len(steam_ids_not_in_db_list)>0 else []
+        steam_user_profile_ids = [steam_profile.steamid for steam_profile in steam_user_profiles]
+        steam_user_profile_dict = { user.steamid:user for user in steam_user_profiles}
+
         user_to_save_in_db = []
-        for idx, steam_id in enumerate(tqdm(steam_id_list, desc="User Info", leave=False)):
+        for idx, steam_id in enumerate(tqdm(steam_id_list, desc="User Info")):
             # profile does not exist both in steam and in db
             if steam_id not in db_profile_ids and steam_id not in steam_user_profile_ids:
                 continue
@@ -181,7 +185,22 @@ class SteamScrapper:
                 steam_gameinfo = steam_api.fetch_game_details(app_id)
                 # app does not exist both in steam and in db
                 if steam_gameinfo is None:
-                    continue
+                    steam_gameinfo = SteamGameinfo(
+                        appid=app_id,
+                        name="",
+                        type="",
+                        min_age=0,
+                        description="",
+                        developers=[],
+                        publishers=[],
+                        genres=[],
+                        categories=[],
+                        about="",
+                        is_free=False,
+                        created_at=self.current_time,
+                        updated_at=self.current_time,
+                        last_failed_update_attempt=self.current_time
+                    )
                 # new profile
                 gameinfo_to_save_in_db.append(steam_gameinfo)
             

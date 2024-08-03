@@ -77,8 +77,7 @@ class SteamMongo(Repo):
         gameplay_dict = asdict(gameplay_info)
         for gameplay_item in gameplay_dict["gameplay_list"]:
             gameplay_item["appid"] = str(gameplay_item["appid"])
-        result = self.gameplay.insert_one(gameplay_dict)
-        logging.info(result)
+        self.gameplay.insert_one(gameplay_dict)
 
     def get_friend_list_by_id(
             self, 
