@@ -53,7 +53,7 @@ def steam_scrap(player_id,steam_key, mongo_db_url, output,frequency,fetch_friend
 
     if gameplay_info is not None:
         # scrap game info
-        game_id_list_str = ",".join([str(gameplay_item.appid) for gameplay_item in gameplay_info.gameplay_list])
+        game_id_list_str = ",".join(list(set([str(gameplay_item.appid) for gameplay_item in gameplay_info.gameplay_list])))
         logging.info("Scrapping Game Info.")
         scrapped_game_info = steam_scrapper.scrap_game_info(game_id_list_str)
         scrapped_game_info_ids_set = set([game_info.appid for game_info in scrapped_game_info])
@@ -63,12 +63,18 @@ def steam_scrap(player_id,steam_key, mongo_db_url, output,frequency,fetch_friend
         logging.info("Scrapping Friends Friend Lists.")
         friend_list_str = ",".join([friend.steamid for friend in friend_list.friend_list])
         steam_scrapper.scrap_users(steam_ids=friend_list_str)
-        for friend_item in tqdm(friend_list.friend_list, desc="Scrapping Friends Friend Lists", leave=False):
+        for friend_item in tqdm(
+            friend_list.friend_list, 
+            desc="Scrapping Friends Friend Lists", 
+            total=len(friend_list.friend_list)):
             steam_scrapper.scrap_friend_list(steam_id=friend_item.steamid)
 
         if fetch_friends:
             logging.info("Scrapping Friends Gameplay Info.")
-            for friend_item in tqdm(friend_list.friend_list, desc="Scrapping Friends Gameplay"):
+            for friend_item in tqdm(
+                friend_list.friend_list, 
+                desc="Scrapping Friends Gameplay", 
+                total=len(friend_list.friend_list)):
                 gameplay_info = steam_scrapper.scrap_gameplay_info(steam_id=friend_item.steamid)
                 if gameplay_info is not None:
                     for gameplay_item in gameplay_info.gameplay_list:

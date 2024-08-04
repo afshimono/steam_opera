@@ -1,4 +1,5 @@
 # Steam Opera
+
 A tool to fetch data and generate stories/reports based on public steam profile data.
 
 ### Steam API Key and the Steam Profile ID
@@ -8,16 +9,19 @@ The API Key can be requested in this link: https://steamcommunity.com/dev/apikey
 To find your Steam Profile ID, you can use a online tutorial such as this one: https://support.nexon.net/hc/en-us/articles/360001118286-How-do-I-find-my-Steam-ID-
 
 ### Postman
+
 There is a postman collection in the `/postman` folder with the most used Steam API Endpoints.
 You will need to configure the variables for `STEAM_KEY` and `STEAM_PROFILE_ID` with the values obtained in the previous steps.
 
 ### Python Dependencies
+
 As always, create a `venv` ( for example, `python3 -m venv venv` which will create a `venv` folder for it, and activate it with `source venv/bin/activate` in Linux ),
 install the depencies with `pip install -r notebooks/requirements.txt` for the notebooks.
 
 Finally, just run `jupyter notebook` to start the server and access the link displayed in the terminal.
 
 ### Jupyter Notebooks
+
 We have an experimental notebook to see what sort of data can be generated from the APIs.
 Currently it is generating reports based only in the all-time player gameplay.
 
@@ -32,6 +36,7 @@ first day of the month on a regular basis.
 The description of what each graph represents can be found in the Notebook itself, as a text/content block instead of code.
 
 There are some ENV variables that can be configured for the notebooks, which are available in the `sample.env` file. Those are:
+
 ```
 STEAM_KEY => The Steam Key
 PLAYER_ID => Your Steam Player ID
@@ -41,25 +46,29 @@ CLEAN_GAMEPLAY_DB =>  The same thing for gameplay info.
 ```
 
 ### Library
+
 Work In Progress
 
 ### TO-DO by Devs
-- [x] Experimental Notebook to generate reports with all-time gameplay
-- [x] Save results to TinyDB to avoid Steam API consumption
-- [x] README Notebook Section
-- [ ] Makefile
-- [ ] Steam Data Lib
-- [ ] Tests
-- [ ] Pipelines
-- [ ] README Lib Section
+
+-   [x] Experimental Notebook to generate reports with all-time gameplay
+-   [x] Save results to TinyDB to avoid Steam API consumption
+-   [x] README Notebook Section
+-   [ ] Makefile
+-   [x] Steam API
+-   [x] Steam Scrapper
+-   [ ] Tests
+-   [ ] Pipelines
+-   [ ] README Lib Section
 
 ### TO-DO by Users
-- [x] Top 10 Game by Playtime
-- [x] Playtime by Genre
-- [x] Game count by Genre
-- [ ] Check how many friends are available for the report
-- [ ] Show names of the games by developer
-- [ ] Show names of friends in the top played games
-- [ ] Show how many games were not available
-- [ ] Include Steam Reviews data as another source of game quality besides metacritic
-- [ ] Check if the number of friends and friends DF contains duplicates
+
+-   [x] Top 10 Game by Playtime
+-   [x] Playtime by Genre
+-   [x] Game count by Genre
+-   [ ] Check how many friends are available for the report
+-   [x] Show names of the games by developer
+-   [x] Show names of friends in the top played games
+-   [ ] Show how many games were not available
+-   [ ] Include Steam Reviews data as another source of game quality besides metacritic
+-   [ ] Check if the number of friends and friends DF contains duplicates
