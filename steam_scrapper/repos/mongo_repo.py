@@ -61,7 +61,7 @@ class SteamMongo(Repo):
         if created_month is not None:
             query_dict.update({"created_month":created_month})
         result = self.gameplay.aggregate([
-            # Matchn the documents possible
+            # Match the documents possible
             { "$match": query_dict },
             # Group the documents and "count" via $sum on the values
             { "$group": {
@@ -114,7 +114,7 @@ class SteamMongo(Repo):
         if created_month is not None:
             query_dict.update({"created_month":created_month})
         result = self.friend_lists.aggregate([
-            # Matchn the documents possible
+            # Match the documents possible
             { "$match": query_dict },
             # Group the documents and "count" via $sum on the values
             { "$group": {
