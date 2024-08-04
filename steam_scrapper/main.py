@@ -9,13 +9,13 @@ from config import config
 from scrapper import SteamScrapper
 
 @click.command()
-@click.argument("player_id", type=str)
+@click.argument("player_ids", type=str)
 @click.argument("steam_key", envvar="STEAM_KEY", type=str)
 @click.option("--mongo_db_url", envvar="MONGO_DB_URL", type=str)
 @click.option("--output", default="mongo")
 @click.option("--frequency", default="month")
 @click.option("--fetch_friends/--dont_fetch_friends", default=False)
-def steam_scrap(player_id,steam_key, mongo_db_url, output,frequency,fetch_friends):
+def steam_scrap(player_ids,steam_key, mongo_db_url, output,frequency,fetch_friends):
     repo = None
     # gets repo
     if output == "mongo":
@@ -27,60 +27,18 @@ def steam_scrap(player_id,steam_key, mongo_db_url, output,frequency,fetch_friend
     if repo is None:
         raise ValueError("No Repository has been assigned to scrap.")
     
-    logging.info(f"Scrapping for Player ID {player_id}")
+    logging.info(f"Scrapping for Player ID(s) {player_ids}")
     
     steam_scrapper = SteamScrapper(
         repo = repo, 
         frequency = frequency)
-    # fetch target steam player:
-    logging.info("Scrapping user data.")
-    steam_scrapper.scrap_users(steam_ids=player_id)
-    saved_user = repo.get_player_info_by_id_list([player_id])
-
-    if len(saved_user)>0:
-        target_profile = saved_user[0]
-    else:
-        logging.warning("Informed player ID was not retrieved properly.")
-        return None
-    # scrap friend list
-    logging.info("Scrapping Friend List.")
-    friend_list = steam_scrapper.scrap_friend_list(steam_id=player_id)
-    # scrap gameplay info
-    logging.info("Scrapping Gameplay Info.")
-    gameplay_info = steam_scrapper.scrap_gameplay_info(steam_id=player_id)
-    game_info_set = set()
-    scrapped_game_info_ids_set = set()
-
-    if gameplay_info is not None:
-        # scrap game info
-        game_id_list_str = ",".join(list(set([str(gameplay_item.appid) for gameplay_item in gameplay_info.gameplay_list])))
-        logging.info("Scrapping Game Info.")
-        scrapped_game_info = steam_scrapper.scrap_game_info(game_id_list_str)
-        scrapped_game_info_ids_set = set([game_info.appid for game_info in scrapped_game_info])
-
-    if friend_list is not None:
-        # scrap friend information
-        logging.info("Scrapping Friends Friend Lists.")
-        friend_friends_list = [friend.steamid for friend in friend_list.friend_list]
-        friend_list_str = ",".join(friend_friends_list)
-        steam_scrapper.scrap_users(steam_ids=friend_list_str)
-        steam_scrapper.scrap_friend_list_batch(steam_id_list=friend_friends_list)
-
-        if fetch_friends:
-            logging.info("Scrapping Friends Gameplay Info.")
-            gameplay_info_list = steam_scrapper.scrap_gameplay_batch(steam_id_list=friend_friends_list)
-            for gameplay_info in gameplay_info_list:
-                for gameplay_item in gameplay_info.gameplay_list:
-                    game_info_set.add(gameplay_item.appid)
-            game_info_set = game_info_set.difference(scrapped_game_info_ids_set)
-            game_id_list_str = ",".join(list(game_info_set))
-            logging.info("Scrapping Friends Game Info.")
-            steam_scrapper.scrap_game_info(game_id_list_str)
-    else:
-        logging.info("Gameplay Info Empty. Skipping GameInfo, FriendsData, etc)")
-    logging.info(f"Scrapping done! New information for Player {target_profile.persona_name} "+
-                f"- Friends {len(friend_list.friend_list) if friend_list is not None else 0} "+
-                f"- Game Info {len(game_info_set) + len(scrapped_game_info_ids_set)}")
+    player_id_list = player_ids.split(",")
+    for idx, player_id in enumerate(player_id_list):
+        logging.info(f"Scrapping user {idx+1} out of {len(player_id_list)}")
+        steam_scrapper.scrap_all_user_data(
+            player_id=player_id,
+            fetch_friends=fetch_friends)
+    
 
 def configure_logging():
     import sys
