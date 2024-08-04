@@ -50,6 +50,30 @@ class SteamMongo(Repo):
     def delete_player_info_list(self, player_id_list: List[str]):
         result = self.steam_profiles.delete_many({"steamid": {"$in":player_id_list}})
 
+    def get_existing_gameplay_info_ids(
+        self, 
+        player_id_list: List[str], 
+        created_year: Optional[int]=None, 
+        created_month: Optional[int]=None)->List[str]:
+        query_dict = {"steamid": {"$in":player_id_list}}
+        if created_year is not None:
+            query_dict.update({"created_year":created_year})
+        if created_month is not None:
+            query_dict.update({"created_month":created_month})
+        result = self.gameplay.aggregate([
+            # Matchn the documents possible
+            { "$match": query_dict },
+            # Group the documents and "count" via $sum on the values
+            { "$group": {
+                "_id": {
+                    "steamid": "$steamid"
+                },
+                "count": { "$sum": 1 }
+            }}
+        ])
+        result_list = [item["_id"]["steamid"] for item in list(result)]
+        return result_list
+
     def get_gameplay_info_by_id(
             self, 
             player_id: str, 
@@ -78,6 +102,30 @@ class SteamMongo(Repo):
         for gameplay_item in gameplay_dict["gameplay_list"]:
             gameplay_item["appid"] = str(gameplay_item["appid"])
         self.gameplay.insert_one(gameplay_dict)
+
+    def get_existing_friend_list_ids(
+        self, 
+        player_id_list: List[str], 
+        created_year: Optional[int]=None, 
+        created_month: Optional[int]=None)->List[str]:
+        query_dict = {"steamid": {"$in":player_id_list}}
+        if created_year is not None:
+            query_dict.update({"created_year":created_year})
+        if created_month is not None:
+            query_dict.update({"created_month":created_month})
+        result = self.friend_lists.aggregate([
+            # Matchn the documents possible
+            { "$match": query_dict },
+            # Group the documents and "count" via $sum on the values
+            { "$group": {
+                "_id": {
+                    "steamid": "$steamid"
+                },
+                "count": { "$sum": 1 }
+            }}
+        ])
+        result_list = [item["_id"]["steamid"] for item in list(result)]
+        return result_list
 
     def get_friend_list_by_id(
             self, 
