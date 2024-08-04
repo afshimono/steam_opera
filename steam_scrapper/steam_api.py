@@ -153,7 +153,7 @@ def fetch_game_details(
     if not gameinfo_result["success"]:
         return None
     gameinfo_details = gameinfo_result["data"]
-    release_date_str = gameinfo_details["release_date"].get("date") if not gameinfo_details["release_date"]["coming_soon"] else None
+    release_date_str = None if gameinfo_details["release_date"]["coming_soon"] else gameinfo_details["release_date"].get("date")
     if release_date_str:
         try:
             release_date = dt.datetime.strptime(release_date_str,"%d %b, %Y")
