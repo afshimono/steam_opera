@@ -18,6 +18,14 @@ class Repo(ABC):
         pass
 
     @abstractmethod
+    def get_existing_gameplay_info_ids(
+        self, 
+        player_id_list: List[str], 
+        created_year: Optional[int]=None, 
+        created_month: Optional[int]=None)->List[str]:
+        pass
+
+    @abstractmethod
     def get_gameplay_info_by_id(
         self, 
         player_id: str, 
@@ -27,6 +35,14 @@ class Repo(ABC):
 
     @abstractmethod
     def save_gameplay_info(self, gameplay_info: GameplayList):
+        pass
+
+    @abstractmethod
+    def get_existing_friend_list_ids(
+        self, 
+        player_id_list: List[str], 
+        created_year: Optional[int]=None, 
+        created_month: Optional[int]=None)->List[str]:
         pass
 
     @abstractmethod

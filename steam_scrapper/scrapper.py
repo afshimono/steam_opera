@@ -72,25 +72,30 @@ class SteamScrapper:
 
     def scrap_friend_list_batch(self, steam_id_list:List[str])->None:
         """
-        Creates a new entry for friend list.
+        Scrapes a list of friend_lists for the informed ids.
         :param steam_id_list: the list of steam id to retrieve the friend list
         :type steam_id: List[str]
         """
-        if not self.is_friend_list_updated(steam_id):
+        query_year = self.current_time.year if self.frequency in ["year","month"] else None
+        query_month = self.current_time.month if self.frequency == "month" else None
+        db_friend_list_ids = self.repo.get_existing_friend_list_ids(
+            player_id_list=steam_id_list,
+            created_month=query_month,
+            created_year=query_year)
+        steam_id_list_to_fetch = [steam_id for steam_id in steam_id_list if steam_id not in db_friend_list_ids]
+        for steam_id in tqdm(steam_id_list_to_fetch,
+                             desc="Fetching FriendList"):
             steam_friend_list = steam_api.fetch_player_friend_list(player_id=steam_id)
-            if len(steam_friend_list)>0:
-                steam_friend_list_obj = SteamFriendList(
-                    steamid=steam_id,
-                    friend_list=steam_friend_list,
-                    created_at=self.current_time,
-                    updated_at=self.current_time,
-                    created_month=self.current_time.month,
-                    created_year=self.current_time.year
-                )
-                self.repo.save_friend_list(steam_friend_list_obj)
-                return steam_friend_list_obj
-            return None
-        return self.repo.get_friend_list_by_id(player_id=steam_id)[0]
+            steam_friend_list_obj = SteamFriendList(
+                steamid=steam_id,
+                friend_list=steam_friend_list,
+                created_at=self.current_time,
+                updated_at=self.current_time,
+                created_month=self.current_time.month,
+                created_year=self.current_time.year
+            )
+            self.repo.save_friend_list(steam_friend_list_obj)
+
 
     def scrap_friend_list(self, steam_id:str)->Union[SteamFriendList,None]:
         """
@@ -100,18 +105,16 @@ class SteamScrapper:
         """
         if not self.is_friend_list_updated(steam_id):
             steam_friend_list = steam_api.fetch_player_friend_list(player_id=steam_id)
-            if len(steam_friend_list)>0:
-                steam_friend_list_obj = SteamFriendList(
-                    steamid=steam_id,
-                    friend_list=steam_friend_list,
-                    created_at=self.current_time,
-                    updated_at=self.current_time,
-                    created_month=self.current_time.month,
-                    created_year=self.current_time.year
-                )
-                self.repo.save_friend_list(steam_friend_list_obj)
-                return steam_friend_list_obj
-            return None
+            steam_friend_list_obj = SteamFriendList(
+                steamid=steam_id,
+                friend_list=steam_friend_list,
+                created_at=self.current_time,
+                updated_at=self.current_time,
+                created_month=self.current_time.month,
+                created_year=self.current_time.year
+            )
+            self.repo.save_friend_list(steam_friend_list_obj)
+            return steam_friend_list_obj
         return self.repo.get_friend_list_by_id(player_id=steam_id)[0]
 
     def is_friend_list_updated(self, steam_id: str)->bool:
@@ -201,18 +204,26 @@ class SteamScrapper:
             self.repo.save_game_info_list(gameinfo_to_save_in_db)
         return final_gameinfo_list
     
-    def list_chunk(self,my_list:List, list_size:int)-> List: # type: ignore
-        for i in range(0, len(my_list), list_size):  
-            yield my_list[i:i + list_size] 
 
-    def scrap_gameplay_info(self, steam_id:str)->Union[GameplayList,None]:
+
+    def scrap_gameplay_batch(self, steam_id_list:List[str])->List[GameplayList]:
         """
-        Fetch gameplay information, saves it, and returns the GameplayList information.
+        Scrapes a list of gameplays for the informed ids.
+        :param steam_id_list: the list of steam id to retrieve the friend list
+        :type steam_id: List[str]
         """
-        if not self.is_gameplay_info_updated(steam_id):
+        query_year = self.current_time.year if self.frequency in ["year","month"] else None
+        query_month = self.current_time.month if self.frequency == "month" else None
+        db_gameinfo_ids = self.repo.get_existing_gameplay_info_ids(
+            player_id_list=steam_id_list,
+            created_month=query_month,
+            created_year=query_year)
+        steam_id_list_to_fetch = [steam_id for steam_id in steam_id_list if steam_id not in db_gameinfo_ids]
+        final_result = []
+        for steam_id in tqdm(steam_id_list_to_fetch,
+                             desc="Fetching Gameplay"):
             gameplay_list = steam_api.fetch_player_gameplay_list(player_id=steam_id)
-            if len(gameplay_list)>0:
-                steam_gameplay_list_obj = GameplayList(
+            steam_gameplay_list_obj = GameplayList(
                     steamid=steam_id,
                     gameplay_list=gameplay_list,
                     created_at=self.current_time,
@@ -220,9 +231,26 @@ class SteamScrapper:
                     created_month=self.current_time.month,
                     created_year=self.current_time.year
                 )
-                self.repo.save_gameplay_info(steam_gameplay_list_obj)
-                return steam_gameplay_list_obj
-            return None
+            final_result.append(steam_gameplay_list_obj)
+            self.repo.save_gameplay_info(steam_gameplay_list_obj)
+        return final_result
+
+    def scrap_gameplay_info(self, steam_id:str)->Union[GameplayList,None]:
+        """
+        Fetch gameplay information, saves it, and returns the GameplayList information.
+        """
+        if not self.is_gameplay_info_updated(steam_id):
+            gameplay_list = steam_api.fetch_player_gameplay_list(player_id=steam_id)
+            steam_gameplay_list_obj = GameplayList(
+                steamid=steam_id,
+                gameplay_list=gameplay_list,
+                created_at=self.current_time,
+                updated_at=self.current_time,
+                created_month=self.current_time.month,
+                created_year=self.current_time.year
+            )
+            self.repo.save_gameplay_info(steam_gameplay_list_obj)
+            return steam_gameplay_list_obj
         return self.repo.get_gameplay_info_by_id(player_id=steam_id)[0]
 
     def is_gameplay_info_updated(self, steam_id:str)->bool:
@@ -275,4 +303,7 @@ class SteamScrapper:
                 if timestamped_class.last_failed_update_attempt.year == self.current_time.year:
                     return True
         return False
-
+    
+    def list_chunk(self,my_list:List, list_size:int)-> List: # type: ignore
+        for i in range(0, len(my_list), list_size):  
+            yield my_list[i:i + list_size] 
