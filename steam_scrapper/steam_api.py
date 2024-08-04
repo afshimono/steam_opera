@@ -163,7 +163,7 @@ def fetch_game_details(
     gameinfo_url_params = {
         "appids":app_id
     }
-    gameinfo_url = f"{gameinfo_url_base}?{gameinfo_url_params}"
+    gameinfo_url = f"{gameinfo_url_base}?{urlencode(gameinfo_url_params)}"
     r = requests.get(gameinfo_url)
     if r.status_code in [429]:
         raise SteamResourceNotAvailable("Status code not acceptable.")
