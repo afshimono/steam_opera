@@ -9,7 +9,7 @@ from config import config
 from models import SteamProfile, SteamFriendItem, GameplayItem, SteamGameinfo
 from errors import SteamResourceNotAvailable
 
-MAX_RETRIES = 10
+MAX_RETRIES = 15
 
 @backoff.on_exception(backoff.expo,(
         requests.exceptions.ConnectTimeout,
