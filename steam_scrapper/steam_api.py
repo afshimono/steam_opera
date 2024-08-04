@@ -1,5 +1,6 @@
 from typing import List, Union
 import datetime as dt
+from urllib.parse import urlencode
 
 import requests
 import backoff
@@ -27,9 +28,14 @@ def fetch_player_info(
     "type player_ids: str
     """
     steam_key = steam_key or config.steam_key
-    player_url = (
-        f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={steam_key}&steamids={player_ids}"
+    player_url_base = (
+        f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/"
     )
+    player_url_params = {
+        "key": steam_key,
+        "steamids": player_ids
+    }
+    player_url = f"{player_url_base}?{urlencode(player_url_params)}"
     r = requests.get(player_url)
     if r.status_code in [429]:
         raise SteamResourceNotAvailable("Status code not acceptable.")
@@ -72,9 +78,14 @@ def fetch_player_friend_list(player_id:str, steam_key:str=None)->List[SteamFrien
     "type player_ids: str
     """
     steam_key = steam_key or config.steam_key
-    friends_url = (
-        f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key={steam_key}&steamid={player_id}&relationship=friend"
+    friends_url_base = (
+        f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/"
     )
+    friends_url_params = {
+        "key":steam_key,
+        "steamid": player_id
+    }
+    friends_url = f"{friends_url_base}?{urlencode(friends_url_params)}"
     r = requests.get(friends_url)
     if r.status_code in [429]:
         raise SteamResourceNotAvailable("Status code not acceptable.")
@@ -103,9 +114,14 @@ def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[Gameplay
     "type player_ids: str
     """
     steam_key = steam_key or config.steam_key
-    gameplay_url = (
-        f"http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={steam_key}&steamid={player_id}&format=json"
+    gameplay_url_base = (
+        f"http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?"
     )
+    gameplay_url_params = {
+        "key":steam_key,
+        "steamid": player_id
+    }
+    gameplay_url = f"{gameplay_url_base}?{urlencode(gameplay_url_params)}"
     r = requests.get(gameplay_url)
     if r.status_code in [429]:
         raise SteamResourceNotAvailable("Status code not acceptable.")
@@ -141,9 +157,13 @@ def fetch_game_details(
     "type player_ids: str
     """
     steam_key = steam_key or config.steam_key
-    gameinfo_url = (
-        f"http://store.steampowered.com/api/appdetails?appids={app_id}"
+    gameinfo_url_base = (
+        f"http://store.steampowered.com/api/appdetails"
     )
+    gameinfo_url_params = {
+        "appids":app_id
+    }
+    gameinfo_url = f"{gameinfo_url_base}?{urlencode(gameinfo_url_params)}"
     r = requests.get(gameinfo_url)
     if r.status_code in [429]:
         raise SteamResourceNotAvailable("Status code not acceptable.")
