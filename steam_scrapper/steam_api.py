@@ -11,15 +11,20 @@ from errors import SteamResourceNotAvailable
 
 MAX_RETRIES = 15
 
-@backoff.on_exception(backoff.expo,(
+
+@backoff.on_exception(
+    backoff.expo,
+    (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
-        SteamResourceNotAvailable),max_tries=MAX_RETRIES)
+        SteamResourceNotAvailable,
+    ),
+    max_tries=MAX_RETRIES,
+)
 def fetch_player_info(
-    player_ids:str, 
-    steam_key:str=None,
-    current_time:dt.datetime = dt.datetime.now()) -> List[SteamProfile]:
+    player_ids: str, steam_key: str = None, current_time: dt.datetime = dt.datetime.now()
+) -> List[SteamProfile]:
     """
     Fetches the player details for the informed player ids.
     :param steam_key: the key to access the Steam API
@@ -28,13 +33,8 @@ def fetch_player_info(
     "type player_ids: str
     """
     steam_key = steam_key or config.steam_key
-    player_url_base = (
-        f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/"
-    )
-    player_url_params = {
-        "key": steam_key,
-        "steamids": player_ids
-    }
+    player_url_base = f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/"
+    player_url_params = {"key": steam_key, "steamids": player_ids}
     player_url = f"{player_url_base}?{urlencode(player_url_params)}"
     r = requests.get(player_url)
     if r.status_code in [429]:
@@ -58,18 +58,23 @@ def fetch_player_info(
                 loc_country=player.get("loccountrycode"),
                 loc_state=player.get("locstatecode"),
                 created_at=current_time,
-                updated_at=current_time
+                updated_at=current_time,
             )
         )
     return result
 
-@backoff.on_exception(backoff.expo,(
+
+@backoff.on_exception(
+    backoff.expo,
+    (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
-        SteamResourceNotAvailable
-        ),max_tries=MAX_RETRIES)
-def fetch_player_friend_list(player_id:str, steam_key:str=None)->List[SteamFriendItem]:
+        SteamResourceNotAvailable,
+    ),
+    max_tries=MAX_RETRIES,
+)
+def fetch_player_friend_list(player_id: str, steam_key: str = None) -> List[SteamFriendItem]:
     """
     Fetches the friend list for a given player id.
     :param steam_key: the key to access the Steam API
@@ -78,13 +83,8 @@ def fetch_player_friend_list(player_id:str, steam_key:str=None)->List[SteamFrien
     "type player_ids: str
     """
     steam_key = steam_key or config.steam_key
-    friends_url_base = (
-        f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/"
-    )
-    friends_url_params = {
-        "key":steam_key,
-        "steamid": player_id
-    }
+    friends_url_base = f"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/"
+    friends_url_params = {"key": steam_key, "steamid": player_id}
     friends_url = f"{friends_url_base}?{urlencode(friends_url_params)}"
     r = requests.get(friends_url)
     if r.status_code in [429]:
@@ -94,18 +94,25 @@ def fetch_player_friend_list(player_id:str, steam_key:str=None)->List[SteamFrien
     friend_list = r.json()["friendslist"]["friends"]
     result = []
     for friend in friend_list:
-        result.append(SteamFriendItem(
-            steamid=friend.get("steamid"),
-            friend_since=dt.datetime.fromtimestamp(friend.get("friend_since"))
-        ))
+        result.append(
+            SteamFriendItem(
+                steamid=friend.get("steamid"), friend_since=dt.datetime.fromtimestamp(friend.get("friend_since"))
+            )
+        )
     return result
 
-@backoff.on_exception(backoff.expo,(
+
+@backoff.on_exception(
+    backoff.expo,
+    (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
-        SteamResourceNotAvailable),max_tries=MAX_RETRIES)
-def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[GameplayItem]:
+        SteamResourceNotAvailable,
+    ),
+    max_tries=MAX_RETRIES,
+)
+def fetch_player_gameplay_list(player_id: str, steam_key: str = None) -> List[GameplayItem]:
     """
     Fetches the gameplay list for a given player id.
     :param steam_key: the key to access the Steam API
@@ -114,13 +121,8 @@ def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[Gameplay
     "type player_ids: str
     """
     steam_key = steam_key or config.steam_key
-    gameplay_url_base = (
-        f"http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?"
-    )
-    gameplay_url_params = {
-        "key":steam_key,
-        "steamid": player_id
-    }
+    gameplay_url_base = f"http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?"
+    gameplay_url_params = {"key": steam_key, "steamid": player_id}
     gameplay_url = f"{gameplay_url_base}?{urlencode(gameplay_url_params)}"
     r = requests.get(gameplay_url)
     if r.status_code in [429]:
@@ -132,23 +134,30 @@ def fetch_player_gameplay_list(player_id:str, steam_key:str=None)->List[Gameplay
         return []
     result = []
     for gameplay in gameplay_list:
-        last_time_played = gameplay.get("rtime_last_played",0)
-        result.append(GameplayItem(
-            appid=str(gameplay.get("appid")),
-            last_time_played=dt.datetime.fromtimestamp(last_time_played) if last_time_played != 0 else None,
-            playtime=gameplay.get("playtime_forever"))
+        last_time_played = gameplay.get("rtime_last_played", 0)
+        result.append(
+            GameplayItem(
+                appid=str(gameplay.get("appid")),
+                last_time_played=dt.datetime.fromtimestamp(last_time_played) if last_time_played != 0 else None,
+                playtime=gameplay.get("playtime_forever"),
+            )
         )
     return result
 
-@backoff.on_exception(backoff.expo,(
+
+@backoff.on_exception(
+    backoff.expo,
+    (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
-        SteamResourceNotAvailable),max_tries=MAX_RETRIES)
+        SteamResourceNotAvailable,
+    ),
+    max_tries=MAX_RETRIES,
+)
 def fetch_game_details(
-    app_id:str, 
-    steam_key:str=None,
-    current_time:dt.datetime = dt.datetime.now())->Union[SteamGameinfo,None]:
+    app_id: str, steam_key: str = None, current_time: dt.datetime = dt.datetime.now()
+) -> Union[SteamGameinfo, None]:
     """
     Fetches the game details for a given app id.
     :param steam_key: the key to access the Steam API
@@ -157,12 +166,8 @@ def fetch_game_details(
     "type player_ids: str
     """
     steam_key = steam_key or config.steam_key
-    gameinfo_url_base = (
-        f"http://store.steampowered.com/api/appdetails"
-    )
-    gameinfo_url_params = {
-        "appids":app_id
-    }
+    gameinfo_url_base = f"http://store.steampowered.com/api/appdetails"
+    gameinfo_url_params = {"appids": app_id}
     gameinfo_url = f"{gameinfo_url_base}?{urlencode(gameinfo_url_params)}"
     r = requests.get(gameinfo_url)
     if r.status_code in [429]:
@@ -173,16 +178,18 @@ def fetch_game_details(
     if not gameinfo_result["success"]:
         return None
     gameinfo_details = gameinfo_result["data"]
-    release_date_str = None if gameinfo_details["release_date"]["coming_soon"] else gameinfo_details["release_date"].get("date")
+    release_date_str = (
+        None if gameinfo_details["release_date"]["coming_soon"] else gameinfo_details["release_date"].get("date")
+    )
     if release_date_str:
         try:
-            release_date = dt.datetime.strptime(release_date_str,"%d %b, %Y")
+            release_date = dt.datetime.strptime(release_date_str, "%d %b, %Y")
         except ValueError:
             try:
-                release_date = dt.datetime.strptime(release_date_str,"%b %d, %Y")
+                release_date = dt.datetime.strptime(release_date_str, "%b %d, %Y")
             except ValueError:
                 try:
-                    release_date = dt.datetime.strptime(release_date_str,"%d %b %Y")
+                    release_date = dt.datetime.strptime(release_date_str, "%d %b %Y")
                 except ValueError:
                     release_date = None
     else:
@@ -192,10 +199,13 @@ def fetch_game_details(
     categories_item = gameinfo_details.get("categories")
     categories_list = [item["description"] for item in categories_item] if categories_item else []
     metacritic_item = gameinfo_details.get("metacritic")
+    min_age = gameinfo_details.get("required_age")
+    if type(min_age) is str:
+        min_age = int("".join(c for c in min_age if c.isdigit()))
     result = SteamGameinfo(
         appid=str(gameinfo_details.get("steam_appid")),
         name=gameinfo_details.get("name"),
-        min_age=int(gameinfo_details.get("required_age")),
+        min_age=min_age,
         description=gameinfo_details.get("detailed_description"),
         about=gameinfo_details.get("about_the_game"),
         release_date=release_date,
@@ -207,6 +217,6 @@ def fetch_game_details(
         genres=genre_list,
         categories=categories_list,
         created_at=current_time,
-        updated_at=current_time
+        updated_at=current_time,
     )
     return result
