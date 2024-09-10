@@ -152,6 +152,20 @@ class SteamScrapper:
             new_steam_friend_list = SteamFriendList(
                 created_at=self.current_time,
                 updated_at=self.current_time,
+                created_month=self.current_time.month,
+                created_year=self.current_time.year
+            )
+            self.repo.save_friend_list(steam_friend_list_obj)
+
+    def scrap_friend_list(self, steam_id:str)->Union[SteamFriendList,None]:
+        """
+        Creates a new entry for friend list.
+        :param steam_id: the steam id to retrieve the friend list
+        :type steam_id: str
+        """
+        if not self.is_friend_list_updated(steam_id):
+            steam_friend_list = steam_api.fetch_player_friend_list(player_id=steam_id)
+            steam_friend_list_obj = SteamFriendList(
                 steamid=steam_id,
                 friend_list=steam_friend_list_items
             )
