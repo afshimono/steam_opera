@@ -6,6 +6,7 @@ import logging
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo import ASCENDING, DESCENDING, ReplaceOne
+import certifi
 
 from repos.repo import Repo
 from models import (
@@ -19,8 +20,8 @@ from models import (
 from config import config
 
 class SteamMongo(Repo):
-    def __init__(self, mongo_url:str, dry_run:bool=False):
-        self.client = MongoClient(mongo_url, server_api=ServerApi('1'))
+    def __init__(self, mongo_url:str, dry_run:bool):
+        self.client = MongoClient(mongo_url, server_api=ServerApi("1"), tlsCAFile=certifi.where())
         try:
             self.client.admin.command('ping')
             print("Pinged your deployment. You successfully connected to MongoDB!")
@@ -171,7 +172,7 @@ class SteamMongo(Repo):
         final_result = [SteamGameinfo(
             **{k:v for k,v in gameinfo.items() if k in field_names}) 
             for gameinfo in list(result_query)]
-        
+
         return final_result
 
     def save_game_info_list(self, game_info_list: List[SteamGameinfo]):

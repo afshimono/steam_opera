@@ -3,3 +3,4 @@ click==8.1.7
 tqdm==2.2.3
 pymongo==4.7.2
 backoff==2.2.1
+certifi

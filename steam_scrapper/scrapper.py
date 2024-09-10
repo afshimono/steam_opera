@@ -22,7 +22,7 @@ class SteamScrapper:
         self.steam_api = steam_api
         self.frequency = frequency
         self.current_time = dt.datetime.now()
-    
+
         self.GAME_INFO_BATCH_SIZE = 500
 
     def scrap_all_user_data(self, player_id: str, fetch_friends: bool) -> None:
@@ -86,7 +86,6 @@ class SteamScrapper:
         logging.info(f"Scrapping done! New information for Player {target_profile.persona_name} "+
                     f"- Friends {len(friend_list.friend_list) if friend_list is not None else 0} "+
                     f"- Game Info {len(game_info_set) + len(scrapped_game_info_ids_set)}")
-
 
     def scrap_users(self, steam_ids: str)->List[SteamProfile]:
         """
@@ -189,7 +188,7 @@ class SteamScrapper:
         :param player_id: the steam profile of the player
         :type player_id: SteamProfile
         """
-        
+
         if self.frequency == "month":
             existing_friend_list = self.repo.get_friend_list_by_id(
                 steam_id, 
@@ -206,7 +205,6 @@ class SteamScrapper:
                 existing_friend_list_item = existing_friend_list[0]
                 return self.is_model_updated(existing_friend_list_item)
         return False
-
 
     def scrap_game_info(self, app_ids:str)->List[SteamGameinfo]:
         """
@@ -268,8 +266,6 @@ class SteamScrapper:
             final_gameinfo_list += gameinfo_to_save_in_db
             self.repo.save_game_info_list(gameinfo_to_save_in_db)
         return final_gameinfo_list
-    
-
 
     def scrap_gameplay_batch(self, steam_id_list:List[str])->List[GameplayList]:
         """
@@ -341,7 +337,7 @@ class SteamScrapper:
                 existing_gameplay_item = existing_gameplay_list[0]
                 return self.is_model_updated(existing_gameplay_item)
         return False
-    
+
     def is_model_updated(
             self, 
             timestamped_class: TimestampedBaseClass)->bool:
@@ -352,10 +348,12 @@ class SteamScrapper:
         :param timestamped_class: the base class to be checked
         :type timestamped_class: TimestampedBaseClass
         """
-        
+
         if self.frequency == "month":
-            if timestamped_class.updated_at.year == self.current_time.year and \
-                timestamped_class.updated_at.month == self.current_time.month:
+            if (
+                timestamped_class.updated_at.year == self.current_time.year
+                and timestamped_class.updated_at.month == self.current_time.month
+            ):
                 return True
             elif timestamped_class.last_failed_update_attempt is not None:
                 if timestamped_class.last_failed_update_attempt.year == self.current_time.year and \
@@ -368,7 +366,7 @@ class SteamScrapper:
                 if timestamped_class.last_failed_update_attempt.year == self.current_time.year:
                     return True
         return False
-    
+
     def list_chunk(self,my_list:List, list_size:int)-> List: # type: ignore
         for i in range(0, len(my_list), list_size):  
             yield my_list[i:i + list_size] 
