@@ -40,21 +40,23 @@ class Repo(ABC):
     @abstractmethod
     def get_existing_friend_list_ids(
         self, 
-        player_id_list: List[str], 
-        created_year: Optional[int]=None, 
-        created_month: Optional[int]=None)->List[str]:
+        player_id_list: List[str])->List[str]:
         pass
 
     @abstractmethod
     def get_friend_list_by_id(
         self, 
-        player_id: str, 
-        created_year: Optional[int]=None, 
-        created_month: Optional[int]=None)->List[SteamFriendList]:
+        player_id: str)->List[SteamFriendList]:
         pass
 
     @abstractmethod
-    def save_friend_list(self, player_friend_list: SteamFriendList):
+    def get_friend_list_by_id_list(
+        self, 
+        player_id_list: List[str])->List[SteamFriendList]:
+        pass
+
+    @abstractmethod
+    def save_friend_list(self, player_friend_list: List[SteamFriendList]):
         pass
 
     @abstractmethod

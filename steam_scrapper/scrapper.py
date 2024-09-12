@@ -47,7 +47,8 @@ class SteamScrapper:
             return None
         # scrap friend list
         logging.info("Scrapping Friend List.")
-        friend_list = self.scrap_friend_list(steam_id=player_id)
+        friend_list_scrap_result = self.scrap_friend_list(steam_id_list=[player_id])
+        friend_list = friend_list_scrap_result[0] if friend_list_scrap_result else None
         # scrap gameplay info
         logging.info("Scrapping Gameplay Info.")
         gameplay_info = self.scrap_gameplay_info(steam_id=player_id)
@@ -68,7 +69,7 @@ class SteamScrapper:
             friend_list_str = ",".join(friend_friends_list)
             logging.info(f"Friend list ids for {target_profile.persona_name}: {friend_list_str}")
             self.scrap_users(steam_ids=friend_list_str)
-            self.scrap_friend_list_batch(steam_id_list=friend_friends_list)
+            self.scrap_friend_list(steam_id_list=friend_friends_list)
 
             if fetch_friends:
                 logging.info("Scrapping Friends Gameplay Info.")
@@ -103,7 +104,7 @@ class SteamScrapper:
         steam_ids_not_in_db_list = [id for id in steam_id_list 
                                     if (id not in db_profile_ids) or
                                     not self.is_model_updated(db_user_profile_dict[id])]
-        steam_user_profiles = steam_api.fetch_player_info(",".join(steam_ids_not_in_db_list)) if len(steam_ids_not_in_db_list)>0 else []
+        steam_user_profiles = self.steam_api.fetch_player_info(",".join(steam_ids_not_in_db_list)) if len(steam_ids_not_in_db_list)>0 else []
         steam_user_profile_ids = [steam_profile.steamid for steam_profile in steam_user_profiles]
         steam_user_profile_dict = { user.steamid:user for user in steam_user_profiles}
 
@@ -131,52 +132,55 @@ class SteamScrapper:
         self.repo.save_player_info_list(user_to_save_in_db)
         return user_to_save_in_db
 
-    def scrap_friend_list_batch(self, steam_id_list:List[str])->None:
+    def scrap_friend_list(self, steam_id_list:List[str])->None:
         """
         Scrapes a list of friend_lists for the informed ids.
         :param steam_id_list: the list of steam id to retrieve the friend list
         :type steam_id: List[str]
         """
-        query_year = self.current_time.year if self.frequency in ["year","month"] else None
-        query_month = self.current_time.month if self.frequency == "month" else None
-        db_friend_list_ids = self.repo.get_existing_friend_list_ids(
-            player_id_list=steam_id_list,
-            created_month=query_month,
-            created_year=query_year)
-        steam_id_list_to_fetch = [steam_id for steam_id in steam_id_list if steam_id not in db_friend_list_ids]
-        for steam_id in tqdm(steam_id_list_to_fetch,
-                             desc="Fetching FriendList"):
-            steam_friend_list = steam_api.fetch_player_friend_list(player_id=steam_id)
-            steam_friend_list_obj = SteamFriendList(
-                steamid=steam_id,
-                friend_list=steam_friend_list,
+
+        db_friend_lists = self.repo.get_friend_list_by_id_list(player_id_list=steam_id_list)
+        db_friend_list_dict = { friend_list.steamid:friend_list for friend_list in db_friend_lists}
+        db_friend_list_ids = [friend_list.steamid for friend_list in db_friend_lists]
+        steam_ids_not_in_db_list = [id for id in steam_id_list 
+                                    if (id not in db_friend_list_ids)]
+        result_friend_list = []
+        friend_lists_to_save_in_db = []
+        for idx, steam_id in enumerate(tqdm(steam_ids_not_in_db_list, desc="Fetching New Friend Lists")):
+            steam_friend_list_items = self.steam_api.fetch_player_friend_list(
+                    player_id=steam_id
+                )
+            new_steam_friend_list = SteamFriendList(
                 created_at=self.current_time,
                 updated_at=self.current_time,
-                created_month=self.current_time.month,
-                created_year=self.current_time.year
-            )
-            self.repo.save_friend_list(steam_friend_list_obj)
-
-
-    def scrap_friend_list(self, steam_id:str)->Union[SteamFriendList,None]:
-        """
-        Creates a new entry for friend list.
-        :param steam_id: the steam id to retrieve the friend list
-        :type steam_id: str
-        """
-        if not self.is_friend_list_updated(steam_id):
-            steam_friend_list = steam_api.fetch_player_friend_list(player_id=steam_id)
-            steam_friend_list_obj = SteamFriendList(
                 steamid=steam_id,
-                friend_list=steam_friend_list,
-                created_at=self.current_time,
-                updated_at=self.current_time,
-                created_month=self.current_time.month,
-                created_year=self.current_time.year
+                friend_list=steam_friend_list_items
             )
-            self.repo.save_friend_list(steam_friend_list_obj)
-            return steam_friend_list_obj
-        return self.repo.get_friend_list_by_id(player_id=steam_id)[0]
+            friend_lists_to_save_in_db.append(new_steam_friend_list)
+            if idx>0 and idx%100==0:
+                self.repo.save_friend_list(friend_lists_to_save_in_db)
+                result_friend_list += friend_lists_to_save_in_db
+                friend_lists_to_save_in_db = []
+        for idx, friend_list in enumerate(tqdm(db_friend_lists, desc="Updating Friend Lists")):
+            if not self.is_model_updated(friend_list):
+                steam_friend_list_items = self.steam_api.fetch_player_friend_list(
+                    player_id=friend_list.steamid
+                )
+                new_steam_friend_list = SteamFriendList(
+                    created_at=friend_list.created_at,
+                    updated_at=self.current_time,
+                    steamid=steam_id,
+                    friend_list=steam_friend_list_items
+                )
+                friend_lists_to_save_in_db.append(new_steam_friend_list)
+            if idx>0 and idx%100==0:
+                self.repo.save_friend_list(friend_lists_to_save_in_db)
+                result_friend_list += friend_lists_to_save_in_db
+                friend_lists_to_save_in_db = []
+        result_friend_list += friend_lists_to_save_in_db
+        self.repo.save_friend_list(friend_lists_to_save_in_db)
+        return result_friend_list
+
 
     def is_friend_list_updated(self, steam_id: str)->bool:
         """
@@ -212,7 +216,7 @@ class SteamScrapper:
         final_gameinfo_list = []
         for app_id_list in tqdm(self.list_chunk(full_app_id_list, self.GAME_INFO_BATCH_SIZE), 
                                 desc="GameInfo chunks", 
-                                total=len(full_app_id_list)):
+                                total=int(len(full_app_id_list)/self.GAME_INFO_BATCH_SIZE)):
             # First fetch existing records
             db_gameinfo = self.repo.get_game_info_by_game_id_list(app_id_list)
             db_gameinfo_dict = { gameinfo.appid:gameinfo for gameinfo in db_gameinfo}
@@ -350,8 +354,8 @@ class SteamScrapper:
         """
         
         if self.frequency == "month":
-            if timestamped_class.created_at.year == self.current_time.year and \
-                timestamped_class.created_at.month == self.current_time.month:
+            if timestamped_class.updated_at.year == self.current_time.year and \
+                timestamped_class.updated_at.month == self.current_time.month:
                 return True
             elif timestamped_class.last_failed_update_attempt is not None:
                 if timestamped_class.last_failed_update_attempt.year == self.current_time.year and \

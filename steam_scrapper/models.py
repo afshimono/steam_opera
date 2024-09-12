@@ -33,8 +33,6 @@ class SteamFriendItem:
 class SteamFriendList(TimestampedBaseClass):
     steamid: str
     friend_list: List[SteamFriendItem]
-    created_year: int
-    created_month: int
 
 @dataclass
 class GameplayItem:

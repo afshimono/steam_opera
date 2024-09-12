@@ -16,9 +16,10 @@ from models import (
     GameplayList, 
     GameplayItem
     )
+from config import config
 
 class SteamMongo(Repo):
-    def __init__(self, mongo_url:str):
+    def __init__(self, mongo_url:str, dry_run:bool=False):
         self.client = MongoClient(mongo_url, server_api=ServerApi('1'))
         try:
             self.client.admin.command('ping')
@@ -30,7 +31,7 @@ class SteamMongo(Repo):
         self.friend_lists = self.steam_db.friend_lists
         self.gameplay = self.steam_db.gameplay
         self.game_info = self.steam_db.game_info
-
+        self.dry_run = dry_run
 
     def get_player_info_by_id_list(self, player_id_list: List[str])->List[SteamProfile]:
         result_query = self.steam_profiles.find({"steamid": {"$in":player_id_list}})
@@ -41,7 +42,7 @@ class SteamMongo(Repo):
         return final_result
 
     def save_player_info_list(self, player_info_list: List[SteamProfile]):
-        if len(player_info_list)>0:
+        if len(player_info_list)>0 and not self.dry_run:
             transformed_list = [asdict(profile) for profile in player_info_list]
             bulk_write_list = [ReplaceOne({"steamid":profile["steamid"]},profile, upsert=True) for profile in transformed_list]
             result = self.steam_profiles.bulk_write(bulk_write_list)
@@ -98,21 +99,16 @@ class SteamMongo(Repo):
         return final_result
 
     def save_gameplay_info(self, gameplay_info: GameplayList):
-        gameplay_dict = asdict(gameplay_info)
-        for gameplay_item in gameplay_dict["gameplay_list"]:
-            gameplay_item["appid"] = str(gameplay_item["appid"])
-        self.gameplay.insert_one(gameplay_dict)
+        if not self.dry_run:
+            gameplay_dict = asdict(gameplay_info)
+            for gameplay_item in gameplay_dict["gameplay_list"]:
+                gameplay_item["appid"] = str(gameplay_item["appid"])
+            self.gameplay.insert_one(gameplay_dict)
 
     def get_existing_friend_list_ids(
         self, 
-        player_id_list: List[str], 
-        created_year: Optional[int]=None, 
-        created_month: Optional[int]=None)->List[str]:
+        player_id_list: List[str])->List[str]:
         query_dict = {"steamid": {"$in":player_id_list}}
-        if created_year is not None:
-            query_dict.update({"created_year":created_year})
-        if created_month is not None:
-            query_dict.update({"created_month":created_month})
         result = self.friend_lists.aggregate([
             # Match the documents possible
             { "$match": query_dict },
@@ -126,17 +122,29 @@ class SteamMongo(Repo):
         ])
         result_list = [item["_id"]["steamid"] for item in list(result)]
         return result_list
+    
 
     def get_friend_list_by_id(
             self, 
-            player_id: str, 
-            created_year: Optional[int]=None, 
-            created_month: Optional[int]=None)->List[SteamFriendList]:
+            player_id: str)->List[SteamFriendList]:
         query_dict = {"steamid": player_id}
-        if created_year is not None:
-            query_dict.update({"created_year":created_year})
-        if created_month is not None:
-            query_dict.update({"created_month":created_month})
+        result_query = self.friend_lists.find(query_dict).sort("updated_at",DESCENDING)
+        field_names = set(f.name for f in fields(SteamFriendList))
+        final_result = [SteamFriendList(
+            **{k:v for k,v in friend_list_item.items() if k in field_names}) for friend_list_item in result_query]
+        friend_list_item_field_names = set(f.name for f in fields(SteamFriendItem))
+        for friend_list in final_result:
+            friend_list.friend_list = [
+                SteamFriendItem(
+                    **{k:v for k,v in friend_list_item.items() if k in friend_list_item_field_names}) 
+                    for friend_list_item in friend_list.friend_list
+            ]
+        return final_result
+    
+    def get_friend_list_by_id_list(
+            self, 
+            player_id_list: List[str])->List[SteamFriendList]:
+        query_dict = {"steamid": {"$in":player_id_list}}
         result_query = self.friend_lists.find(query_dict).sort("updated_at",DESCENDING)
         field_names = set(f.name for f in fields(SteamFriendList))
         final_result = [SteamFriendList(
@@ -150,10 +158,12 @@ class SteamMongo(Repo):
             ]
         return final_result
 
-    def save_friend_list(self, player_friend_list: SteamFriendList):
-        friend_list_dict = asdict(player_friend_list)
-        result = self.friend_lists.insert_one(friend_list_dict)
-        logging.debug(result)
+    def save_friend_list(self, player_friend_list: List[SteamFriendList]):
+        if len(player_friend_list)>0 and not self.dry_run:
+            transformed_list = [asdict(friend_list) for friend_list in player_friend_list]
+            bulk_write_list = [ReplaceOne({"steamid":friend_list["steamid"]},friend_list, upsert=True) for friend_list in transformed_list]
+            result = self.friend_lists.bulk_write(bulk_write_list)
+            logging.debug(result)
 
     def get_game_info_by_game_id_list(self, game_id_list: List[str])->List[SteamGameinfo]:
         result_query = self.game_info.find({"appid": {"$in":game_id_list}})
@@ -165,10 +175,11 @@ class SteamMongo(Repo):
         return final_result
 
     def save_game_info_list(self, game_info_list: List[SteamGameinfo]):
-        if len(game_info_list)>0:
+        if len(game_info_list)>0 and not self.dry_run:
             transformed_list = [asdict(gameinfo) for gameinfo in game_info_list]
             for item in transformed_list:
                 item["appid"] = str(item["appid"])
             bulk_write_list = [ReplaceOne({"appid":gameinfo["appid"]},gameinfo, upsert=True) for gameinfo in transformed_list]
             result = self.game_info.bulk_write(bulk_write_list)
             logging.debug(result)
+

@@ -15,14 +15,16 @@ from scrapper import SteamScrapper
 @click.option("--output", default="mongo")
 @click.option("--frequency", default="month")
 @click.option("--fetch_friends/--dont_fetch_friends", default=False)
-def steam_scrap(player_ids,steam_key, mongo_db_url, output,frequency,fetch_friends):
+@click.option("--dry_run", is_flag=True, default=False)
+def steam_scrap(player_ids,steam_key, mongo_db_url, output,frequency,fetch_friends, dry_run):
+    load_configs(steam_key, mongo_db_url, dry_run)
     repo = None
     # gets repo
     if output == "mongo":
         logging.info("Creating output type Mongo DB...")
         if config.mongodb_url is None:
             raise ValueError("Missing MongoDB URL Env Variable.")
-        repo = SteamMongo(mongo_url=config.mongodb_url)
+        repo = SteamMongo(mongo_url=config.mongodb_url, dry_run=dry_run)
         logging.info("Mongo DB output created.")
     if repo is None:
         raise ValueError("No Repository has been assigned to scrap.")
@@ -51,6 +53,11 @@ def configure_logging():
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s - %(message)s')
     handler.setFormatter(formatter)
     root.addHandler(handler)
+
+def load_configs(steam_key, mongo_db_url, dry_run):
+    config.mongodb_url = mongo_db_url or config.mongodb_url
+    config.dry_run = dry_run or config.dry_run
+    config.steam_key = steam_key
 
 if __name__ == "__main__":
     configure_logging()
