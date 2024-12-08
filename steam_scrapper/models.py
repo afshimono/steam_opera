@@ -47,7 +47,23 @@ class GameplayList(TimestampedBaseClass):
     gameplay_list: List[GameplayItem]
     created_year: int
     created_month: int
-    
+
+
+@dataclass
+class GameplayMonthDeltaItem:
+    appid: str
+    playtime: int
+
+
+@dataclass(kw_only=True)
+class GameplayMonthDeltaList(TimestampedBaseClass):
+    steamid: str
+    gameplay_delta_list: List[GameplayItem]
+    total_playtime: int
+    created_year: int
+    created_month: int
+
+
 @dataclass(kw_only=True)
 class SteamGameinfo(TimestampedBaseClass):
     appid: str
