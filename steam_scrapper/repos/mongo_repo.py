@@ -155,11 +155,38 @@ class SteamMongo(Repo):
             gameplay_item["appid"] = str(gameplay_item["appid"])
         self.gameplay.insert_one(gameplay_dict)
 
-    def save_gameplay_delta_info_list(self, gameplay_delta_info: List[GameplayMonthDeltaList]):
-        gameplay_delta_dict = asdict(gameplay_delta_info)
-        for gameplay_delta_item in gameplay_delta_dict["gameplay_delta_list"]:
-            gameplay_delta_item["appid"] = str(gameplay_delta_item["appid"])
-        self.gameplay.insert_one(gameplay_dict)
+    def delete_gameplay_info(
+        self, player_id: Optional[str] = None, created_year: Optional[int] = None, created_month: Optional[int] = None
+    ):
+        delete_filter = {}
+        if player_id:
+            delete_filter["steamid"] = player_id
+        if created_month is not None:
+            delete_filter["created_month"] = created_month
+        if created_year is not None:
+            delete_filter["created_year"] = created_year
+        self.gameplay.delete_many(delete_filter)
+
+    def save_gameplay_delta_info_list(self, gameplay_delta_info_list: List[GameplayMonthDeltaList]):
+        gameplay_delta_dict = [asdict(item) for item in gameplay_delta_info_list]
+        for gameplay_delta_list_item in gameplay_delta_dict:
+            for gameplay_delta_item in gameplay_delta_list_item["gameplay_delta_list"]:
+                gameplay_delta_item["appid"] = str(gameplay_delta_item["appid"])
+        bulk_write_list = [
+            ReplaceOne(
+                {
+                    "steamid": gameplay_delta_list_item["steamid"],
+                    "created_year": gameplay_delta_list_item["created_year"],
+                    "created_month": gameplay_delta_list_item["created_month"],
+                },
+                gameplay_delta_list_item,
+                upsert=True,
+            )
+            for gameplay_delta_list_item in gameplay_delta_dict
+        ]
+        if bulk_write_list:
+            result = self.gameplay_delta.bulk_write(bulk_write_list)
+            logging.debug(result)
 
     def get_existing_friend_list_ids(
         self, 
