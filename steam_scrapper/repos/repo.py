@@ -34,6 +34,16 @@ class Repo(ABC):
         pass
 
     @abstractmethod
+    def get_gameplay_info_by_id_list(
+        self,
+        player_id_list: List[str] = None,
+        created_year: Optional[int] = None,
+        created_month: Optional[int] = None,
+        sort_query: Optional[bool] = False,
+    ) -> List[GameplayList]:
+        pass
+
+    @abstractmethod
     def save_gameplay_info(self, gameplay_info: GameplayList):
         pass
 

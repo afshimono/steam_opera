@@ -10,13 +10,15 @@ import certifi
 
 from repos.repo import Repo
 from models import (
-    SteamProfile, 
-    SteamFriendList, 
+    SteamProfile,
+    SteamFriendList,
     SteamFriendItem,
-    SteamGameinfo, 
-    GameplayList, 
-    GameplayItem
-    )
+    SteamGameinfo,
+    GameplayList,
+    GameplayItem,
+    GameplayMonthDeltaItem,
+    GameplayMonthDeltaList,
+)
 
 class SteamMongo(Repo):
     def __init__(self, mongo_url:str):
@@ -31,6 +33,15 @@ class SteamMongo(Repo):
         self.friend_lists = self.steam_db.friend_lists
         self.gameplay = self.steam_db.gameplay
         self.game_info = self.steam_db.game_info
+        self.gameplay_delta = self.steam_db.gameplay_delta
+
+    def delete_friend_list(self, created_month: Optional[int] = None, created_year: Optional[int] = None):
+        delete_filter = {}
+        if created_month is not None:
+            delete_filter["created_month"] = created_month
+        if created_year is not None:
+            delete_filter["created_year"] = created_year
+        self.friend_lists.delete_many(delete_filter)
 
     def get_player_info_by_id_list(self, player_id_list: List[str])->List[SteamProfile]:
         result_query = self.steam_profiles.find({"steamid": {"$in":player_id_list}})
@@ -75,32 +86,79 @@ class SteamMongo(Repo):
         return result_list
 
     def get_gameplay_info_by_id(
-            self, 
-            player_id: str, 
-            created_year: Optional[int]=None, 
-            created_month: Optional[int]=None):
-        query_dict = {"steamid": player_id}
+        self,
+        player_id: Optional[str] = None,
+        created_year: Optional[int] = None,
+        created_month: Optional[int] = None,
+        sort_query: Optional[bool] = False,
+    ) -> List[GameplayList]:
+
+        query_dict = {}
+        if player_id is not None:
+            query_dict.update({"steamid": player_id})
+            sort_query = True
         if created_year is not None:
-            query_dict.update({"created_year":created_year})
+            query_dict.update({"created_year": created_year})
         if created_month is not None:
-            query_dict.update({"created_month":created_month})
-        result_query = self.gameplay.find(query_dict).sort("updated_at",DESCENDING)
+            query_dict.update({"created_month": created_month})
+        result_query = self.gameplay.find(query_dict)
+        if sort_query:
+            result_query = result_query.sort("updated_at", DESCENDING)
         field_names = set(f.name for f in fields(GameplayList))
-        final_result = [GameplayList(
-            **{k:v for k,v in friend_list_item.items() if k in field_names}) for friend_list_item in result_query]
+        final_result = [
+            GameplayList(**{k: v for k, v in friend_list_item.items() if k in field_names})
+            for friend_list_item in result_query
+        ]
         gameplay_item_field_names = set(f.name for f in fields(GameplayItem))
         for gameplay_info in final_result:
             gameplay_info.gameplay_list = [
-                GameplayItem(
-                    **{k:v for k,v in gameplay_item.items() if k in gameplay_item_field_names}) 
-                    for gameplay_item in gameplay_info.gameplay_list
-                ]
+                GameplayItem(**{k: v for k, v in gameplay_item.items() if k in gameplay_item_field_names})
+                for gameplay_item in gameplay_info.gameplay_list
+            ]
+        return final_result
+
+    def get_gameplay_info_by_id_list(
+        self,
+        player_id_list: List[str] = None,
+        created_year: Optional[int] = None,
+        created_month: Optional[int] = None,
+        sort_query: Optional[bool] = False,
+    ) -> List[GameplayList]:
+
+        query_dict = {}
+
+        query_dict.update({"steamid": {"$in": player_id_list}})
+
+        if created_year is not None:
+            query_dict.update({"created_year": created_year})
+        if created_month is not None:
+            query_dict.update({"created_month": created_month})
+        result_query = self.gameplay.find(query_dict)
+        if sort_query:
+            result_query = result_query.sort("updated_at", DESCENDING)
+        field_names = set(f.name for f in fields(GameplayList))
+        final_result = [
+            GameplayList(**{k: v for k, v in friend_list_item.items() if k in field_names})
+            for friend_list_item in result_query
+        ]
+        gameplay_item_field_names = set(f.name for f in fields(GameplayItem))
+        for gameplay_info in final_result:
+            gameplay_info.gameplay_list = [
+                GameplayItem(**{k: v for k, v in gameplay_item.items() if k in gameplay_item_field_names})
+                for gameplay_item in gameplay_info.gameplay_list
+            ]
         return final_result
 
     def save_gameplay_info(self, gameplay_info: GameplayList):
         gameplay_dict = asdict(gameplay_info)
         for gameplay_item in gameplay_dict["gameplay_list"]:
             gameplay_item["appid"] = str(gameplay_item["appid"])
+        self.gameplay.insert_one(gameplay_dict)
+
+    def save_gameplay_delta_info_list(self, gameplay_delta_info: List[GameplayMonthDeltaList]):
+        gameplay_delta_dict = asdict(gameplay_delta_info)
+        for gameplay_delta_item in gameplay_delta_dict["gameplay_delta_list"]:
+            gameplay_delta_item["appid"] = str(gameplay_delta_item["appid"])
         self.gameplay.insert_one(gameplay_dict)
 
     def get_existing_friend_list_ids(
