@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 import os
 from dataclasses import asdict, fields
 import logging
@@ -19,6 +19,7 @@ from models import (
     GameplayMonthDeltaItem,
     GameplayMonthDeltaList,
 )
+from errors import DatabaseDeletionError
 
 class SteamMongo(Repo):
     def __init__(self, mongo_url:str):
@@ -36,6 +37,10 @@ class SteamMongo(Repo):
         self.gameplay_delta = self.steam_db.gameplay_delta
 
     def delete_friend_list(self, created_month: Optional[int] = None, created_year: Optional[int] = None):
+        if not any([created_month, created_year]):
+            raise DatabaseDeletionError(
+                "At least one of the filter created_month or created_year must be specified to avoid deleting the whole Database."
+            )
         delete_filter = {}
         if created_month is not None:
             delete_filter["created_month"] = created_month
@@ -101,21 +106,7 @@ class SteamMongo(Repo):
             query_dict.update({"created_year": created_year})
         if created_month is not None:
             query_dict.update({"created_month": created_month})
-        result_query = self.gameplay.find(query_dict)
-        if sort_query:
-            result_query = result_query.sort("updated_at", DESCENDING)
-        field_names = set(f.name for f in fields(GameplayList))
-        final_result = [
-            GameplayList(**{k: v for k, v in friend_list_item.items() if k in field_names})
-            for friend_list_item in result_query
-        ]
-        gameplay_item_field_names = set(f.name for f in fields(GameplayItem))
-        for gameplay_info in final_result:
-            gameplay_info.gameplay_list = [
-                GameplayItem(**{k: v for k, v in gameplay_item.items() if k in gameplay_item_field_names})
-                for gameplay_item in gameplay_info.gameplay_list
-            ]
-        return final_result
+        return self.get_gameplay_from_query(query_dict=query_dict, sort_query=sort_query)
 
     def get_gameplay_info_by_id_list(
         self,
@@ -133,6 +124,9 @@ class SteamMongo(Repo):
             query_dict.update({"created_year": created_year})
         if created_month is not None:
             query_dict.update({"created_month": created_month})
+        return self.get_gameplay_from_query(query_dict=query_dict, sort_query=sort_query)
+
+    def get_gameplay_from_query(self, query_dict: Dict, sort_query: Optional[bool] = False):
         result_query = self.gameplay.find(query_dict)
         if sort_query:
             result_query = result_query.sort("updated_at", DESCENDING)
@@ -158,6 +152,10 @@ class SteamMongo(Repo):
     def delete_gameplay_info(
         self, player_id: Optional[str] = None, created_year: Optional[int] = None, created_month: Optional[int] = None
     ):
+        if not (player_id or (created_month and created_year)):
+            raise DatabaseDeletionError(
+                "At least one of the filter player_id or (created_month and created_year) must be specified to avoid deleting the whole Database."
+            )
         delete_filter = {}
         if player_id:
             delete_filter["steamid"] = player_id
