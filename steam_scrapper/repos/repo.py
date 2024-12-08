@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from abc import ABC, abstractmethod
 
-from models import SteamProfile, SteamFriendList, SteamGameinfo, GameplayList
+from models import SteamProfile, SteamFriendList, SteamGameinfo, GameplayList, GameplayMonthDeltaList
 
 class Repo(ABC):
     @abstractmethod
@@ -45,6 +45,16 @@ class Repo(ABC):
 
     @abstractmethod
     def save_gameplay_info(self, gameplay_info: GameplayList):
+        pass
+
+    @abstractmethod
+    def delete_gameplay_info(
+        self, player_id: Optional[str] = None, created_year: Optional[int] = None, created_month: Optional[int] = None
+    ):
+        pass
+
+    @abstractmethod
+    def save_gameplay_delta_info_list(self, gameplay_delta_info_list: List[GameplayMonthDeltaList]):
         pass
 
     @abstractmethod
