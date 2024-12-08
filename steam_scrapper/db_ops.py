@@ -44,6 +44,30 @@ def create_by_type(create_type, repo, created_month, created_year):
         create_gameplay_delta(repo=repo, created_month=created_month, created_year=created_year)
 
 
+def calculate_gameplay_delta(current_gameplay: GameplayItem, previous_gameplay: GameplayItem) -> GameplayMonthDeltaList:
+    previous_gameplay_dict = {item.appid: item for item in previous_gameplay.gameplay_list}
+    gameplay_delta_items = []
+
+    for gameplay_item in current_gameplay.gameplay_list:
+        previous_playtime = previous_gameplay_dict.get(
+            gameplay_item.appid, GameplayMonthDeltaItem(appid="", playtime=0)
+        ).playtime
+        delta = gameplay_item.playtime - previous_playtime
+        if delta > 0:
+            gameplay_delta_items.append(GameplayMonthDeltaItem(appid=gameplay_item.appid, playtime=delta))
+
+    total_gameplay = sum(item.playtime for item in gameplay_delta_items)
+    return GameplayMonthDeltaList(
+        steamid=current_gameplay.steamid,
+        gameplay_delta_list=gameplay_delta_items,
+        total_playtime=total_gameplay,
+        created_year=current_gameplay.created_year,
+        created_month=current_gameplay.created_month,
+        created_at=dt.datetime.now(),
+        updated_at=dt.datetime.now(),
+    )
+
+
 def create_gameplay_delta(repo, created_month, created_year):
     current_time = dt.datetime.now()
     existing_gameplay_list = repo.get_gameplay_info_by_id(created_year=created_year, created_month=created_month)
@@ -56,36 +80,11 @@ def create_gameplay_delta(repo, created_month, created_year):
             player_id_list=current_items_ids, created_year=previous_year, created_month=previous_month
         )
         previous_month_gameplay_dict = {item.steamid: item for item in previous_month_gameplay_list}
-        items_to_save = []
-        for current_gameplay in current_items:
-            if previous_gameplay := previous_month_gameplay_dict.get(current_gameplay.steamid):
-                previous_gameplay_item_dict = {item.appid: item for item in previous_gameplay.gameplay_list}
-                gameplay_delta_item_list = []
-                for gameplay_item in current_gameplay.gameplay_list:
-                    empty_gameplay_item = GameplayMonthDeltaItem(appid="", playtime=0)
-                    previous_playtime = previous_gameplay_item_dict.get(
-                        gameplay_item.appid, empty_gameplay_item
-                    ).playtime
-                    calulated_gameplay_time = gameplay_item.playtime - previous_playtime
-                    if calulated_gameplay_time > 0:
-                        gameplay_delta_item_list.append(
-                            GameplayMonthDeltaItem(
-                                appid=gameplay_item.appid,
-                                playtime=calulated_gameplay_time,
-                            )
-                        )
-                total_gameplay = sum([item.playtime for item in gameplay_delta_item_list])
-                items_to_save.append(
-                    GameplayMonthDeltaList(
-                        steamid=current_gameplay.steamid,
-                        gameplay_delta_list=gameplay_delta_item_list,
-                        total_playtime=total_gameplay,
-                        created_year=current_gameplay.created_year,
-                        created_month=current_gameplay.created_month,
-                        created_at=current_time,
-                        updated_at=current_time,
-                    )
-                )
+        items_to_save = [
+            calculate_gameplay_delta(current, previous_month_gameplay_dict[current.steamid])
+            for current in current_items
+            if current.steamid in previous_month_gameplay_dict
+        ]
         repo.save_gameplay_delta_info_list(gameplay_delta_info_list=items_to_save)
 
 
