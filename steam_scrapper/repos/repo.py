@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 from models import SteamProfile, SteamFriendList, SteamGameinfo, GameplayList, GameplayMonthDeltaList
 
+
 class Repo(ABC):
     @abstractmethod
     def get_player_info_by_id_list(self, player_id_list: List[str])->List[SteamProfile]:
