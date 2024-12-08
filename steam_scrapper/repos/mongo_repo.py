@@ -152,7 +152,7 @@ class SteamMongo(Repo):
     def delete_gameplay_info(
         self, player_id: Optional[str] = None, created_year: Optional[int] = None, created_month: Optional[int] = None
     ):
-        if not any([player_id, all([created_month, created_year])]):
+        if not (player_id or (created_month and created_year)):
             raise DatabaseDeletionError(
                 "At least one of the filter player_id or (created_month and created_year) must be specified to avoid deleting the whole Database."
             )
