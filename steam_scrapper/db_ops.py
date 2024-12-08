@@ -1,6 +1,7 @@
 import click
 import datetime as dt
 import logging
+from typing import Optional
 
 from tqdm import tqdm
 
@@ -44,7 +45,11 @@ def create_by_type(create_type, repo, created_month, created_year):
         create_gameplay_delta(repo=repo, created_month=created_month, created_year=created_year)
 
 
-def calculate_gameplay_delta(current_gameplay: GameplayItem, previous_gameplay: GameplayItem) -> GameplayMonthDeltaList:
+def calculate_gameplay_delta(
+    current_gameplay: GameplayItem, previous_gameplay: GameplayItem, current_time: Optional[dt.datetime] = None
+) -> GameplayMonthDeltaList:
+    if not current_time:
+        current_time = dt.datetime.now()
     previous_gameplay_dict = {item.appid: item for item in previous_gameplay.gameplay_list}
     gameplay_delta_items = []
 
@@ -81,7 +86,7 @@ def create_gameplay_delta(repo, created_month, created_year):
         )
         previous_month_gameplay_dict = {item.steamid: item for item in previous_month_gameplay_list}
         items_to_save = [
-            calculate_gameplay_delta(current, previous_month_gameplay_dict[current.steamid])
+            calculate_gameplay_delta(current, previous_month_gameplay_dict[current.steamid], current_time=current_time)
             for current in current_items
             if current.steamid in previous_month_gameplay_dict
         ]
