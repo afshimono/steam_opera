@@ -2,6 +2,7 @@ from typing import Optional, List, Dict
 import os
 from dataclasses import asdict, fields
 import logging
+import json
 
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
@@ -19,7 +20,7 @@ from models import (
     GameplayMonthDeltaItem,
     GameplayMonthDeltaList,
 )
-from errors import DatabaseDeletionError
+from errors import DatabaseDeletionError, DatabaseUpdateError
 
 class SteamMongo(Repo):
     def __init__(self, mongo_url:str):
@@ -255,3 +256,19 @@ class SteamMongo(Repo):
             bulk_write_list = [ReplaceOne({"appid":gameinfo["appid"]},gameinfo, upsert=True) for gameinfo in transformed_list]
             result = self.game_info.bulk_write(bulk_write_list)
             logging.debug(result)
+
+    def batch_update_type(self, doc_type: str, query: Dict, new_value: Dict):
+        type_dict = {
+            "gameplay_delta": self.gameplay_delta,
+            "gameplay_info": self.gameplay,
+            "steam_profile": self.steam_profiles,
+            "friend_list": self.friend_lists,
+            "game_info": self.game_info,
+        }
+        db_collection = type_dict.get(doc_type)
+        if db_collection is None:
+            raise DatabaseUpdateError("Invalid Document type.")
+        query = json.loads(query)
+        new_value = json.loads(new_value)
+        update_query = {"$set": new_value}
+        db_collection.update_many(query, update_query)

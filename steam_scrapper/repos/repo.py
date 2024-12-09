@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from abc import ABC, abstractmethod
 
@@ -84,4 +84,8 @@ class Repo(ABC):
 
     @abstractmethod
     def save_game_info_list(self, game_info_list: List[SteamGameinfo]):
+        pass
+
+    @abstractmethod
+    def batch_update_type(self, doc_type: str, query: Dict, new_value: Dict):
         pass

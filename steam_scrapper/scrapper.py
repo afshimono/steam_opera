@@ -249,7 +249,7 @@ class SteamScrapper:
                             is_free=False,
                             created_at=self.current_time,
                             updated_at=self.current_time,
-                            last_failed_update_attempt=self.current_time
+                            last_failed_update_attempt=self.current_time,
                         )
                     # new profile
                     gameinfo_to_save_in_db.append(steam_gameinfo)
