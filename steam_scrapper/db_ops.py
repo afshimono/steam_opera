@@ -9,6 +9,7 @@ from repos.mongo_repo import SteamMongo
 from config import config
 from scrapper import SteamScrapper
 from models import GameplayMonthDeltaItem, GameplayItem, GameplayMonthDeltaList
+from errors import WrongScriptInput
 
 CREATE_BATCH_SIZE = 200
 
@@ -16,9 +17,12 @@ CREATE_BATCH_SIZE = 200
 @click.command()
 @click.option("--delete_type", type=str)
 @click.option("--create_type", type=str)
+@click.option("--update_type", type=str)
 @click.option("--created_month", type=int)
 @click.option("--created_year", type=int)
-def db_ops(delete_type, create_type, created_month, created_year):
+@click.option("--existing_value", type=str)
+@click.option("--new_value", type=str)
+def db_ops(delete_type, create_type, update_type, created_month, created_year, existing_value, new_value):
     repo = None
 
     logging.info("Connecting to Mongo DB...")
@@ -31,6 +35,10 @@ def db_ops(delete_type, create_type, created_month, created_year):
         delete_by_type(delete_type, repo, created_month, created_year)
     elif create_type is not None:
         create_by_type(create_type, repo, created_month, created_year)
+    elif update_type is not None:
+        if existing_value is None or new_value is None:
+            raise WrongScriptInput("existing_value and new_value are missing.")
+        update_by_type(repo=repo, update_type=update_type, existing_value=existing_value, new_value=new_value)
 
 
 def delete_by_type(delete_type, repo, created_month, created_year):
@@ -43,6 +51,10 @@ def delete_by_type(delete_type, repo, created_month, created_year):
 def create_by_type(create_type, repo, created_month, created_year):
     if create_type == "gameplay_delta":
         create_gameplay_delta(repo=repo, created_month=created_month, created_year=created_year)
+
+
+def update_by_type(update_type, repo, existing_value, new_value):
+    repo.batch_update_type(doc_type=update_type, query=existing_value, new_value=new_value)
 
 
 def calculate_gameplay_delta(
@@ -66,8 +78,8 @@ def calculate_gameplay_delta(
         steamid=current_gameplay.steamid,
         gameplay_delta_list=gameplay_delta_items,
         total_playtime=total_gameplay,
-        created_year=current_gameplay.created_year,
-        created_month=current_gameplay.created_month,
+        created_year=previous_gameplay.created_year,
+        created_month=previous_gameplay.created_month,
         created_at=dt.datetime.now(),
         updated_at=dt.datetime.now(),
     )
