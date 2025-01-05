@@ -45,6 +45,11 @@ CLEAN_USER_DB => This is used to remove all the data from the users from your Ti
 CLEAN_GAMEPLAY_DB =>  The same thing for gameplay info.
 ```
 
+Converting a notebook to html:
+```
+jupyter nbconvert notebooks/<NOTEBOOK_NAME>.ipynb --no-input --no-prompt --to html --output <STEAM_ID>
+```
+
 ### Library
 
 Work In Progress
