@@ -201,7 +201,7 @@ class SteamScrapper:
                 return self.is_model_updated(existing_friend_list_item)
         return False
 
-    def scrap_game_info(self, app_ids:str)->List[SteamGameinfo]:
+    def scrap_game_info(self, app_ids: str, update_existing: bool = False) -> List[SteamGameinfo]:
         """
         Fetch information about the specified game, saves it, and return the GameInfo model list.
         """
@@ -219,7 +219,7 @@ class SteamScrapper:
                                 desc="Game Info",
                                 total=len(app_id_list)):
                 if app_id in db_gameinfo_ids:
-                    if not self.is_model_updated(db_gameinfo_dict[app_id]):
+                    if update_existing and not self.is_model_updated(db_gameinfo_dict[app_id]):
                         steam_gameinfo = steam_api.fetch_game_details(app_id)  
                         # profile not found in steam but existing in db
                         if app_id in db_gameinfo_ids and steam_gameinfo is None:
@@ -259,7 +259,8 @@ class SteamScrapper:
                     final_gameinfo_list += gameinfo_to_save_in_db
                     gameinfo_to_save_in_db = []
             final_gameinfo_list += gameinfo_to_save_in_db
-            self.repo.save_game_info_list(gameinfo_to_save_in_db)
+            if len(gameinfo_to_save_in_db) > 0:
+                self.repo.save_game_info_list(gameinfo_to_save_in_db)
         return final_gameinfo_list
 
     def scrap_gameplay_batch(self, steam_id_list:List[str])->List[GameplayList]:
