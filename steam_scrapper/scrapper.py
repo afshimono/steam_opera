@@ -390,12 +390,11 @@ class SteamScrapper:
         user_list_to_create = [user_id for user_id in user_list if user_id not in existing_gameplay_delta_ids]
         gameplay_monthly_delta_to_add = []
         for user_id in user_list_to_create:
-            new_monthly_gameplay_delta = self.create_monthly_gameplay_delta(
-                    steam_id=user_id,
-                    created_month=self.current_time.month,
-                    created_year=self.current_time.year
-            )
-            if new_monthly_gameplay_delta:
+            if new_monthly_gameplay_delta := self.create_monthly_gameplay_delta(
+                steam_id=user_id,
+                created_month=self.current_time.month,
+                created_year=self.current_time.year,
+            ):
                 gameplay_monthly_delta_to_add.append(new_monthly_gameplay_delta)
         if gameplay_monthly_delta_to_add:
             self.repo.save_gameplay_delta_info_list(gameplay_delta_info_list=gameplay_monthly_delta_to_add)
