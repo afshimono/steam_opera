@@ -379,7 +379,7 @@ class SteamScrapper:
         for i in range(0, len(my_list), list_size):  
             yield my_list[i:i + list_size] 
 
-    def scrap_monthly_gameplay_delta(self, user_ids:str) -> Union[GameplayMonthDeltaList,None]:
+    def scrap_monthly_gameplay_delta(self, user_ids:str) -> None:
         user_list = user_ids.split(",")
         last_month, last_year = get_last_month_and_year_from_datetime(self.current_time)
         existing_gameplay_delta_ids = self.repo.get_existing_gameplay_delta_info_id_list(
