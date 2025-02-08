@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Union
 
 from abc import ABC, abstractmethod
 
@@ -6,6 +6,28 @@ from models import SteamProfile, SteamFriendList, SteamGameinfo, GameplayList, G
 
 
 class Repo(ABC):
+    # Friend List
+    @abstractmethod
+    def get_existing_friend_list_ids(
+        self, 
+        player_id_list: List[str], 
+        created_year: Optional[int]=None, 
+        created_month: Optional[int]=None)->List[str]:
+        pass
+
+    @abstractmethod
+    def get_friend_list_by_id(
+        self, 
+        player_id: str, 
+        created_year: Optional[int]=None, 
+        created_month: Optional[int]=None)->List[SteamFriendList]:
+        pass
+
+    @abstractmethod
+    def save_friend_list(self, player_friend_list: SteamFriendList):
+        pass
+
+    # Player Info
     @abstractmethod
     def get_player_info_by_id_list(self, player_id_list: List[str])->List[SteamProfile]:
         pass
@@ -18,6 +40,7 @@ class Repo(ABC):
     def delete_player_info_list(self, player_id_list: List[str]):
         pass
 
+    # Gameplay Info
     @abstractmethod
     def get_existing_gameplay_info_ids(
         self, 
@@ -55,29 +78,36 @@ class Repo(ABC):
         pass
 
     @abstractmethod
+    def delete_gameplay_info_by_id_list(
+        self, player_id_list: List[str], created_year: Optional[int] = None, created_month: Optional[int] = None
+    ):
+        pass
+
+    # Gameplay Delta
+    @abstractmethod
+    def get_existing_gameplay_delta_info_id_list(
+        self, 
+        steam_id_list:List[str],
+        created_year: Optional[int] = None, 
+        created_month: Optional[int] = None
+        )-> Union[None, List[str]]:
+        pass
+
+    @abstractmethod
+    def get_existing_gameplay_delta_info_list(
+        self, 
+        steam_id_list:List[str],
+        created_year: Optional[int] = None, 
+        created_month: Optional[int] = None
+        )-> Union[None, List[GameplayMonthDeltaList]]:
+        pass
+
+    @abstractmethod
     def save_gameplay_delta_info_list(self, gameplay_delta_info_list: List[GameplayMonthDeltaList]):
         pass
 
-    @abstractmethod
-    def get_existing_friend_list_ids(
-        self, 
-        player_id_list: List[str], 
-        created_year: Optional[int]=None, 
-        created_month: Optional[int]=None)->List[str]:
-        pass
 
-    @abstractmethod
-    def get_friend_list_by_id(
-        self, 
-        player_id: str, 
-        created_year: Optional[int]=None, 
-        created_month: Optional[int]=None)->List[SteamFriendList]:
-        pass
-
-    @abstractmethod
-    def save_friend_list(self, player_friend_list: SteamFriendList):
-        pass
-
+    # Game Info
     @abstractmethod
     def get_game_info_by_game_id_list(self, game_id_list: List[str]):
         pass
@@ -86,6 +116,3 @@ class Repo(ABC):
     def save_game_info_list(self, game_info_list: List[SteamGameinfo]):
         pass
 
-    @abstractmethod
-    def batch_update_type(self, doc_type: str, query: Dict, new_value: Dict):
-        pass

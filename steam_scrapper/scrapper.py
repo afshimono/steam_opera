@@ -12,9 +12,13 @@ from models import (
     SteamFriendList, 
     SteamGameinfo, 
     GameplayList, 
-    TimestampedBaseClass
+    TimestampedBaseClass,
+    GameplayItem,
+    GameplayMonthDeltaItem,
+    GameplayMonthDeltaList
     )
 import steam_api
+from utils import get_last_month_and_year_from_datetime
 
 class SteamScrapper:
     def __init__(self, repo:Repo, frequency:str):
@@ -61,6 +65,11 @@ class SteamScrapper:
             scrapped_game_info = self.scrap_game_info(game_id_list_str)
             scrapped_game_info_ids_set = set([game_info.appid for game_info in scrapped_game_info])
 
+            # scrap gameplay delta
+            logging.info("Calculating Gameplay Deltas.")
+            self.scrap_monthly_gameplay_delta(player_id)
+
+
         if friend_list is not None:
             # scrap friend information
             logging.info("Scrapping Friends Friend Lists.")
@@ -80,8 +89,11 @@ class SteamScrapper:
                 game_id_list_str = ",".join(list(game_info_set))
                 logging.info("Scrapping Friends Game Info.")
                 self.scrap_game_info(game_id_list_str)
+                logging.info("Scrapping Friends Gameplay Delta.")
+                self.scrap_monthly_gameplay_delta(friend_list_str)
         else:
             logging.info("Gameplay Info Empty. Skipping GameInfo, FriendsData, etc)")
+
         logging.info(f"Scrapping done! New information for Player {target_profile.persona_name} "+
                     f"- Friends {len(friend_list.friend_list) if friend_list is not None else 0} "+
                     f"- Game Info {len(game_info_set) + len(scrapped_game_info_ids_set)}")
@@ -366,3 +378,78 @@ class SteamScrapper:
     def list_chunk(self,my_list:List, list_size:int)-> List: # type: ignore
         for i in range(0, len(my_list), list_size):  
             yield my_list[i:i + list_size] 
+
+    def scrap_monthly_gameplay_delta(self, user_ids:str) -> Union[GameplayMonthDeltaList,None]:
+        user_list = user_ids.split(",")
+        last_month, last_year = get_last_month_and_year_from_datetime(self.current_time)
+        existing_gameplay_delta_ids = self.repo.get_existing_gameplay_delta_info_id_list(
+            steam_id_list=user_list,
+            created_month=last_month,
+            created_year=last_year
+        )
+        user_list_to_create = [user_id for user_id in user_list if user_id not in existing_gameplay_delta_ids]
+        gameplay_monthly_delta_to_add = []
+        for user_id in user_list_to_create:
+            new_monthly_gameplay_delta = self.create_monthly_gameplay_delta(
+                    steam_id=user_id,
+                    created_month=self.current_time.month,
+                    created_year=self.current_time.year
+            )
+            if new_monthly_gameplay_delta:
+                gameplay_monthly_delta_to_add.append(new_monthly_gameplay_delta)
+        if gameplay_monthly_delta_to_add:
+            self.repo.save_gameplay_delta_info_list(gameplay_delta_info_list=gameplay_monthly_delta_to_add)
+        if user_list_to_create:
+            self.delete_previous_gameplay_info(user_ids=user_list_to_create)
+
+
+    def calculate_gameplay_delta(
+        self,
+        current_gameplay: GameplayItem, 
+        previous_gameplay: GameplayItem
+    ) -> GameplayMonthDeltaList:
+        previous_gameplay_dict = {item.appid: item for item in previous_gameplay.gameplay_list}
+        gameplay_delta_items = []
+
+        for gameplay_item in current_gameplay.gameplay_list:
+            previous_playtime = previous_gameplay_dict.get(
+                gameplay_item.appid, GameplayMonthDeltaItem(appid="", playtime=0)
+            ).playtime
+            delta = gameplay_item.playtime - previous_playtime
+            if delta > 0:
+                gameplay_delta_items.append(GameplayMonthDeltaItem(appid=gameplay_item.appid, playtime=delta))
+
+        total_gameplay = sum(item.playtime for item in gameplay_delta_items)
+        return GameplayMonthDeltaList(
+            steamid=current_gameplay.steamid,
+            gameplay_delta_list=gameplay_delta_items,
+            total_playtime=total_gameplay,
+            created_year=previous_gameplay.created_year,
+            created_month=previous_gameplay.created_month,
+            created_at=self.current_time,
+            updated_at=self.current_time,
+        )
+
+
+    def create_monthly_gameplay_delta(self, steam_id:str, created_month:int, created_year:int):
+        existing_gameplay_list = self.repo.get_gameplay_info_by_id(player_id=steam_id,created_year=created_year, created_month=created_month)
+        if len(existing_gameplay_list) == 1:
+            current_item = existing_gameplay_list[0]
+            previous_month = (created_month - 1) if created_month > 1 else 12
+            previous_year = created_year if previous_month != 12 else (created_year - 1)
+            previous_month_gameplay_list = self.repo.get_gameplay_info_by_id(
+                player_id=current_item.steamid, created_year=previous_year, created_month=previous_month
+            )
+            if len(previous_month_gameplay_list) == 1:
+                previous_month_item = previous_month_gameplay_list[0]
+                return self.calculate_gameplay_delta(current_item, previous_month_item)
+            logging.info(f"No Gameplay Info for previous month for steam id {steam_id}, gameplay delta not created.")
+        logging.info(f"No Gameplay Info for current month for steam id {steam_id}, gameplay delta not created.")
+                
+            
+    def delete_previous_gameplay_info(self, user_ids: List[str]):
+        last_month, last_year = get_last_month_and_year_from_datetime(self.current_time)
+        self.repo.delete_gameplay_info_by_id_list(
+            player_id_list=user_ids,
+            created_month=last_month,
+            created_year=last_year)

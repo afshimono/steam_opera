@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 import os
 from dataclasses import asdict, fields
 import logging
@@ -37,6 +37,60 @@ class SteamMongo(Repo):
         self.game_info = self.steam_db.game_info
         self.gameplay_delta = self.steam_db.gameplay_delta
 
+    # Friend List
+
+    def get_existing_friend_list_ids(
+        self, 
+        player_id_list: List[str], 
+        created_year: Optional[int]=None, 
+        created_month: Optional[int]=None)->List[str]:
+        query_dict = {"steamid": {"$in":player_id_list}}
+        if created_year is not None:
+            query_dict.update({"created_year":created_year})
+        if created_month is not None:
+            query_dict.update({"created_month":created_month})
+        result = self.friend_lists.aggregate([
+            # Match the documents possible
+            { "$match": query_dict },
+            # Group the documents and "count" via $sum on the values
+            { "$group": {
+                "_id": {
+                    "steamid": "$steamid"
+                },
+                "count": { "$sum": 1 }
+            }}
+        ])
+        result_list = [item["_id"]["steamid"] for item in list(result)]
+        return result_list
+
+    def get_friend_list_by_id(
+            self, 
+            player_id: str, 
+            created_year: Optional[int]=None, 
+            created_month: Optional[int]=None)->List[SteamFriendList]:
+        query_dict = {"steamid": player_id}
+        if created_year is not None:
+            query_dict.update({"created_year":created_year})
+        if created_month is not None:
+            query_dict.update({"created_month":created_month})
+        result_query = self.friend_lists.find(query_dict).sort("updated_at",DESCENDING)
+        field_names = set(f.name for f in fields(SteamFriendList))
+        final_result = [SteamFriendList(
+            **{k:v for k,v in friend_list_item.items() if k in field_names}) for friend_list_item in result_query]
+        friend_list_item_field_names = set(f.name for f in fields(SteamFriendItem))
+        for friend_list in final_result:
+            friend_list.friend_list = [
+                SteamFriendItem(
+                    **{k:v for k,v in friend_list_item.items() if k in friend_list_item_field_names}) 
+                    for friend_list_item in friend_list.friend_list
+            ]
+        return final_result
+
+    def save_friend_list(self, player_friend_list: SteamFriendList):
+        friend_list_dict = asdict(player_friend_list)
+        result = self.friend_lists.replace_one({"steamid":player_friend_list.steamid},friend_list_dict,upsert=True)
+        logging.debug(result)
+
     def delete_friend_list(self, created_month: Optional[int] = None, created_year: Optional[int] = None):
         if not any([created_month, created_year]):
             raise DatabaseDeletionError(
@@ -48,6 +102,8 @@ class SteamMongo(Repo):
         if created_year is not None:
             delete_filter["created_year"] = created_year
         self.friend_lists.delete_many(delete_filter)
+
+    # Player Info
 
     def get_player_info_by_id_list(self, player_id_list: List[str])->List[SteamProfile]:
         result_query = self.steam_profiles.find({"steamid": {"$in":player_id_list}})
@@ -67,6 +123,7 @@ class SteamMongo(Repo):
     def delete_player_info_list(self, player_id_list: List[str]):
         result = self.steam_profiles.delete_many({"steamid": {"$in":player_id_list}})
 
+    # Gameplay Info
     def get_existing_gameplay_info_ids(
         self, 
         player_id_list: List[str], 
@@ -166,7 +223,75 @@ class SteamMongo(Repo):
             delete_filter["created_year"] = created_year
         self.gameplay.delete_many(delete_filter)
 
-    def save_gameplay_delta_info_list(self, gameplay_delta_info_list: List[GameplayMonthDeltaList]):
+    def delete_gameplay_info_by_id_list(
+        self, player_id_list: List[str], created_year: Optional[int] = None, created_month: Optional[int] = None
+    ):
+        if not (player_id_list):
+            raise DatabaseDeletionError(
+                "At least one of the filter player_id or (created_month and created_year) must be specified to avoid deleting the whole Database."
+            )
+        delete_filter = {}
+        delete_filter["steamid"] = {"$in":player_id_list}
+        if created_month is not None:
+            delete_filter["created_month"] = created_month
+        if created_year is not None:
+            delete_filter["created_year"] = created_year
+        self.gameplay.delete_many(delete_filter)
+
+    # Gameplay Delta
+    def get_existing_gameplay_delta_info_id_list(
+        self, 
+        steam_id_list:List[str],
+        created_year: Optional[int] = None, 
+        created_month: Optional[int] = None
+        )-> Union[None, List[str]]:
+        query_dict = {"steamid": {"$in":steam_id_list}}
+        if created_year is not None:
+            query_dict.update({"created_year":created_year})
+        if created_month is not None:
+            query_dict.update({"created_month":created_month})
+        result = self.gameplay_delta.aggregate([
+            # Match the documents possible
+            { "$match": query_dict },
+            # Group the documents and "count" via $sum on the values
+            { "$group": {
+                "_id": {
+                    "steamid": "$steamid"
+                },
+                "count": { "$sum": 1 }
+            }}
+        ])
+        result_list = [item["_id"]["steamid"] for item in list(result)]
+        return result_list
+    
+    def get_existing_gameplay_delta_info_list(
+        self, 
+        steam_id_list:List[str],
+        created_year: Optional[int] = None, 
+        created_month: Optional[int] = None
+        )-> Union[None, List[GameplayMonthDeltaList]]:
+        query_dict = {"steamid": {"$in":steam_id_list}}
+        if created_year is not None:
+            query_dict.update({"created_year":created_year})
+        if created_month is not None:
+            query_dict.update({"created_month":created_month})
+        result = self.gameplay_delta.find(query_dict)
+        field_names = set(f.name for f in fields(GameplayMonthDeltaList))
+        final_result = [
+            GameplayMonthDeltaList(**{k: v for k, v in gameplay_delta_item.items() if k in field_names})
+            for gameplay_delta_item in result
+        ]
+        gameplay_delta_item_field_names = set(f.name for f in fields(GameplayMonthDeltaItem))
+        for gameplay_delta in final_result:
+            gameplay_delta.gameplay_list = [
+                GameplayMonthDeltaItem(**{k: v for k, v in gameplay_item.items() if k in gameplay_delta_item_field_names})
+                for gameplay_item in gameplay_delta.gameplay_list
+            ]
+        return final_result
+
+    def save_gameplay_delta_info_list(self, gameplay_delta_info_list: List[GameplayMonthDeltaList])->None:
+        if not gameplay_delta_info_list:
+            return None
         gameplay_delta_dict = [asdict(item) for item in gameplay_delta_info_list]
         for gameplay_delta_list_item in gameplay_delta_dict:
             for gameplay_delta_item in gameplay_delta_list_item["gameplay_delta_list"]:
@@ -187,57 +312,7 @@ class SteamMongo(Repo):
             result = self.gameplay_delta.bulk_write(bulk_write_list)
             logging.debug(result)
 
-    def get_existing_friend_list_ids(
-        self, 
-        player_id_list: List[str], 
-        created_year: Optional[int]=None, 
-        created_month: Optional[int]=None)->List[str]:
-        query_dict = {"steamid": {"$in":player_id_list}}
-        if created_year is not None:
-            query_dict.update({"created_year":created_year})
-        if created_month is not None:
-            query_dict.update({"created_month":created_month})
-        result = self.friend_lists.aggregate([
-            # Match the documents possible
-            { "$match": query_dict },
-            # Group the documents and "count" via $sum on the values
-            { "$group": {
-                "_id": {
-                    "steamid": "$steamid"
-                },
-                "count": { "$sum": 1 }
-            }}
-        ])
-        result_list = [item["_id"]["steamid"] for item in list(result)]
-        return result_list
-
-    def get_friend_list_by_id(
-            self, 
-            player_id: str, 
-            created_year: Optional[int]=None, 
-            created_month: Optional[int]=None)->List[SteamFriendList]:
-        query_dict = {"steamid": player_id}
-        if created_year is not None:
-            query_dict.update({"created_year":created_year})
-        if created_month is not None:
-            query_dict.update({"created_month":created_month})
-        result_query = self.friend_lists.find(query_dict).sort("updated_at",DESCENDING)
-        field_names = set(f.name for f in fields(SteamFriendList))
-        final_result = [SteamFriendList(
-            **{k:v for k,v in friend_list_item.items() if k in field_names}) for friend_list_item in result_query]
-        friend_list_item_field_names = set(f.name for f in fields(SteamFriendItem))
-        for friend_list in final_result:
-            friend_list.friend_list = [
-                SteamFriendItem(
-                    **{k:v for k,v in friend_list_item.items() if k in friend_list_item_field_names}) 
-                    for friend_list_item in friend_list.friend_list
-            ]
-        return final_result
-
-    def save_friend_list(self, player_friend_list: SteamFriendList):
-        friend_list_dict = asdict(player_friend_list)
-        result = self.friend_lists.insert_one(friend_list_dict)
-        logging.debug(result)
+    # Game Info
 
     def get_game_info_by_game_id_list(self, game_id_list: List[str])->List[SteamGameinfo]:
         result_query = self.game_info.find({"appid": {"$in":game_id_list}})
@@ -257,6 +332,7 @@ class SteamMongo(Repo):
             result = self.game_info.bulk_write(bulk_write_list)
             logging.debug(result)
 
+    # Shared
     def batch_update_type(self, doc_type: str, query: Dict, new_value: Dict):
         type_dict = {
             "gameplay_delta": self.gameplay_delta,
