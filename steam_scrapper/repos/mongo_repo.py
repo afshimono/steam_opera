@@ -230,8 +230,7 @@ class SteamMongo(Repo):
             raise DatabaseDeletionError(
                 "At least one of the filter player_id or (created_month and created_year) must be specified to avoid deleting the whole Database."
             )
-        delete_filter = {}
-        delete_filter["steamid"] = {"$in":player_id_list}
+        delete_filter = {"steamid": {"$in": player_id_list}}
         if created_month is not None:
             delete_filter["created_month"] = created_month
         if created_year is not None:
