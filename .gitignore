@@ -164,3 +164,4 @@ cython_debug/
 
 # MAC sh1+
 .DS_Store
+.qodo
