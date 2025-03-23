@@ -1,6 +1,6 @@
 requests==2.32.2
 click==8.1.7
-tqdm==2.2.3
+tqdm==4.67.1
 pymongo==4.11.3
 backoff==2.2.1
 certifi
