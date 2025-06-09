@@ -52,7 +52,7 @@ jupyter nbconvert notebooks/<NOTEBOOK_NAME>.ipynb --no-input --no-prompt --to ht
 
 Sample to run and save in command line:
 ```
-export $(grep -v '^#' .env | xargs) && export PLAYER_ID=<ID> && jupyter nbconvert --to notebook --inplace --execute notebooks/SteamProfileOperaPLotlyMongoDB.ipynb && jupyter nbconvert notebooks/SteamProfileOperaPLotlyMongoDB.ipynb --no-input --no-prompt --to html --output $PLAYER_ID
+export $(grep -v '^#' .env | xargs) && export PLAYER_ID=<ID> && jupyter nbconvert --to notebook --inplace --execute notebooks/SteamProfileOperaPlotlyMongoDB.ipynb && jupyter nbconvert notebooks/SteamProfileOperaPlotlyMongoDB.ipynb --no-input --no-prompt --to html --output $PLAYER_ID
 ```
 
 ### Library
