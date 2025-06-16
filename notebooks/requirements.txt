@@ -4,5 +4,5 @@ tinydb-serialization==2.1.1
 pandas==2.2.3
 seaborn==0.13.2
 python-dotenv==1.0.1
-requests==2.32.3
+requests==2.32.4
 plotly==6.0.1
